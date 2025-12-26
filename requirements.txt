@@ -1,0 +1,11 @@
+Django
+django-allauth
+pandas
+openpyxl
+Pillow
+xlrd
+
+requests
+PyJWT
+cryptography
+requests-oauthlib

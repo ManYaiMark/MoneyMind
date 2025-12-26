@@ -1,0 +1,89 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm sticky-top" style="top: 20px;">
+            <div class="card-body">
+                <h5 class="card-title fw-bold text-primary mb-3">🎯 ตั้งงบประมาณเดือนนี้</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">เลือกหมวดหมู่</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">วงเงิน (บาท)</label>
+                        {{ form.amount_limit }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill">บันทึกงบประมาณ</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title fw-bold mb-0">📊 สถานะงบประมาณ (เดือน {{ current_month }}/{{ current_year }})</h5>
+                </div>
+
+                <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 25%;">หมวดหมู่</th>
+                            <th style="width: 45%;">สถานะการใช้จ่าย</th>
+                            <th style="width: 20%;" class="text-end">คงเหลือ</th>
+                            <th style="width: 10%;" class="text-center">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in budget_data %}
+                        <tr>
+                            <td class="fw-bold">{{ item.category.name }}</td>
+                            <td>
+                                {% if item.limit > 0 %}
+                                    <div class="d-flex justify-content-between small mb-1">
+                                        <span>ใช้ไป {{ item.used|floatformat:0 }}</span>
+                                        <span class="text-muted">งบ {{ item.limit|floatformat:0 }}</span>
+                                    </div>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar bg-{{ item.status_color }}" role="progressbar" 
+                                            style="width: {{ item.percent }}%"></div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">ยังไม่ได้ตั้งงบ</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if item.limit > 0 %}
+                                    <span class="{% if item.remain < 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+                                        {{ item.remain|floatformat:0 }}
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if item.budget_id %}
+                                    <a href="{% url 'edit_budget' item.budget_id %}" class="btn btn-sm btn-outline-warning border-0 p-1" title="แก้ไข">
+                                        ✏️
+                                    </a>
+                                    <a href="{% url 'delete_budget' item.budget_id %}" class="btn btn-sm btn-outline-danger border-0 p-1" onclick="return confirm('ลบงบประมาณ?')" title="ลบ">
+                                        🗑️
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

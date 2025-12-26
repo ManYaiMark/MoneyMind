@@ -1,0 +1,147 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm sticky-top" style="top: 20px;">
+            <div class="card-body">
+                <h5 class="card-title fw-bold text-primary mb-3">➕ เพิ่มหมวดหมู่ใหม่</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">ชื่อหมวดหมู่</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ประเภท</label>
+                        {{ form.type }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill">บันทึก</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-4">📂 จัดการหมวดหมู่</h5>
+                
+                <ul class="nav nav-tabs mb-3" id="catTab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active text-danger fw-bold" data-bs-toggle="tab" data-bs-target="#expense" type="button">รายจ่าย</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link text-success fw-bold" data-bs-toggle="tab" data-bs-target="#income" type="button">รายรับ</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="expense">
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ชื่อหมวดหมู่</th>
+                                        <th class="text-end">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cat in categories %}
+                                        {% if cat.type == 'EXPENSE' %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger p-2 rounded-pill">
+                                                    {{ cat.name }}
+                                                </span>
+                                            </td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ cat.id }}">
+                                                    ✏️
+                                                </button>
+                                                <a href="{% url 'delete_category' cat.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('ยืนยันที่จะลบหมวด {{ cat.name }} ?')">
+                                                    🗑️
+                                                </a>
+
+                                                <div class="modal fade" id="editModal{{ cat.id }}" tabindex="-1">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <form action="{% url 'edit_category' cat.id %}" method="post">
+                                                                {% csrf_token %}
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title">แก้ไขหมวดหมู่</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                </div>
+                                                                <div class="modal-body text-start">
+                                                                    <div class="mb-3">
+                                                                        <label>ชื่อหมวดหมู่</label>
+                                                                        <input type="text" name="name" value="{{ cat.name }}" class="form-control" required>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label>ประเภท</label>
+                                                                        <select name="type" class="form-select">
+                                                                            <option value="EXPENSE" {% if cat.type == 'EXPENSE' %}selected{% endif %}>รายจ่าย</option>
+                                                                            <option value="INCOME" {% if cat.type == 'INCOME' %}selected{% endif %}>รายรับ</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                                                                    <button type="submit" class="btn btn-primary">บันทึกการแก้ไข</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane fade" id="income">
+                        <table class="table align-middle">
+                            <thead class="table-light"><tr><th>ชื่อหมวดหมู่</th><th class="text-end">จัดการ</th></tr></thead>
+                            <tbody>
+                                {% for cat in categories %}
+                                    {% if cat.type == 'INCOME' %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success p-2 rounded-pill">
+                                                {{ cat.name }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-warning me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ cat.id }}">✏️</button>
+                                            <a href="{% url 'delete_category' cat.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('ยืนยันการลบ?')">🗑️</a>
+                                            <div class="modal fade" id="editModal{{ cat.id }}" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <form action="{% url 'edit_category' cat.id %}" method="post">
+                                                            {% csrf_token %}
+                                                            <div class="modal-header"><h5 class="modal-title">แก้ไข</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                                            <div class="modal-body text-start">
+                                                                <input type="text" name="name" value="{{ cat.name }}" class="form-control mb-2">
+                                                                <select name="type" class="form-select"><option value="INCOME" selected>รายรับ</option><option value="EXPENSE">รายจ่าย</option></select>
+                                                            </div>
+                                                            <div class="modal-footer"><button type="submit" class="btn btn-primary">บันทึก</button></div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

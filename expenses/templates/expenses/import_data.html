@@ -1,0 +1,47 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-5 text-center">
+                <div class="mb-4">
+                    <span style="font-size: 3rem;">📂</span>
+                    <h3 class="fw-bold text-primary mt-2">นำเข้าไฟล์ข้อมูล</h3>
+                    <p class="text-muted">รองรับไฟล์ Excel (.xlsx) และ CSV</p>
+                </div>
+
+                <div class="alert alert-info text-start small mb-4">
+                    <b class="fs-5 mb-1">💡 คำแนะนำการเตรียมไฟล์:</b><br>
+                    ควรมีหัวตารางดังนี้ (ภาษาไทยหรืออังกฤษก็ได้):
+                    <ul class="mb-0 mt-1 pl-3">
+                        <li><b>วันที่ (Date) :</b> เช่น 12/01/2025</li>
+                        <li><b>รายการ (Description) :</b> เช่น ค่าอาหาร</li>
+                        <li><b>จำนวนเงิน (Amount) :</b> เช่น -50 หรือ 1000</li>
+                        <li><b>หมวดหมู่ (Category) :</b> (ระบุหรือไม่ก็ได้)</li>
+                    </ul>
+                    <div style="height: 20px;"></div>
+                    <div class="d-flex flex-column gap-2">
+                            <span class="small fs-5 fw-bold text-secondary">📥 โหลดไฟล์ตัวอย่าง:</span>
+                            <div class="btn-group shadow-sm mx-4 ">
+                                <a href="{% url 'download_template' %}?format=xlsx" class="btn btn-sm btn-light border text-success fw-bold">Excel</a>
+                                <a href="{% url 'download_template' %}?format=csv" class="btn btn-sm btn-light border text-primary fw-bold">CSV</a>
+                                <a href="{% url 'download_template' %}?format=txt" class="btn btn-sm btn-light border text-dark fw-bold">Text</a>
+                            </div>
+                        </div>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-4 text-start">
+                        {{ form.file }}
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm">
+                        เริ่มนำเข้าข้อมูล
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

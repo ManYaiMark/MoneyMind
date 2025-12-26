@@ -1,0 +1,33 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h4 class="card-title fw-bold text-primary mb-3">📝 บันทึกรายการด่วน</h4>
+                <p class="text-muted small mb-4">พิมพ์รายการที่ต้องการ ระบบจะแยกข้อมูลให้อัตโนมัติ</p>
+
+                <div class="alert alert-light border border-secondary-subtle text-secondary mb-3">
+                    <small>
+                        <b>💡 ตัวอย่างการพิมพ์:</b><br>
+                        12/12/25 <span class="text-muted">(เปลี่ยนวันที่)</span><br>
+                        -50 ข้าวผัด <span class="text-muted">(รายจ่าย)</span><br>
+                        +1000 เงินเดือน <span class="text-muted">(รายรับ)</span>
+                    </small>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        {{ form.raw_data }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
+                        บันทึกข้อมูล
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

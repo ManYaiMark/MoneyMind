@@ -1,0 +1,139 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="card-title opacity-75">💰 ยอดคงเหลือสุทธิ</h6>
+                <h2 class="fw-bold">{{ balance|floatformat:2 }} บาท</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success text-success shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="card-title">รายรับรวม</h6>
+                <h3 class="fw-bold">+{{ total_income|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-danger text-danger shadow-sm h-100">
+            <div class="card-body">
+                <h6 class="card-title">รายจ่ายรวม</h6>
+                <h3 class="fw-bold">-{{ total_expense|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-3">สัดส่วนค่าใช้จ่าย</h5>
+                <canvas id="donutChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title fw-bold mb-3">รายรับ-รายจ่าย 7 วันย้อนหลัง</h5>
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title fw-bold">รายการล่าสุด</h5>
+            <a href="{% url 'add_smart_transaction' %}" class="btn btn-sm btn-outline-primary">+ เพิ่มรายการ</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>วันที่</th>
+                        <th>รายการ</th>
+                        <th>หมวดหมู่</th>
+                        <th class="text-end">จำนวนเงิน</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in transactions %}
+                    <tr>
+                        <td>{{ txn.date|date:"d M Y" }}</td>
+                        <td>{{ txn.description }}</td>
+                        <td>
+                            {% if txn.category %}
+                                <span class="badge bg-secondary">{{ txn.category.name }}</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark border">ไม่ระบุ</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-bold {% if txn.amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ txn.amount|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">ยังไม่มีข้อมูลรายการ</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div style="height: 40px;">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 1. Donut Chart Config
+    const ctxDonut = document.getElementById('donutChart').getContext('2d');
+    new Chart(ctxDonut, {
+        type: 'doughnut',
+        data: {
+            labels: {{ donut_labels|safe }},
+            datasets: [{
+                data: {{ donut_data|safe }},
+                backgroundColor: ['#ff7675', '#74b9ff', '#55efc4', '#ffeaa7', '#a29bfe'],
+                borderWidth: 0
+            }]
+        },
+        options: { responsive: true, cutout: '70%' }
+    });
+
+    // 2. Bar Chart Config
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: {{ bar_labels|safe }},
+            datasets: [
+                {
+                    label: 'รายรับ',
+                    data: {{ bar_income|safe }},
+                    backgroundColor: '#00b894',
+                    borderRadius: 5
+                },
+                {
+                    label: 'รายจ่าย',
+                    data: {{ bar_expense|safe }},
+                    backgroundColor: '#ff7675',
+                    borderRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true } }
+        }
+    });
+</script>
+{% endblock %}

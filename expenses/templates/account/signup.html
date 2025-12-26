@@ -1,0 +1,55 @@
+{% extends "expenses/base.html" %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-5">
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-body p-5">
+                
+                <div class="text-center mb-4">
+                    <h1 class="display-4 mb-2">🚀</h1>
+                    <h2 class="fw-bold text-success">สมัครสมาชิกใหม่</h2>
+                    <p class="text-muted">เริ่มต้นจัดการการเงินของคุณวันนี้</p>
+                </div>
+
+                <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text small text-muted">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="text-danger small mt-1">* {{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    <button class="btn btn-success w-100 py-3 rounded-pill fw-bold mt-3 shadow-sm" type="submit">
+                        ยืนยันการสมัคร
+                    </button>
+                </form>
+                
+                <div class="mt-4 text-center small">
+                    มีบัญชีอยู่แล้ว? <a href="{% url 'account_login' %}" class="text-decoration-none fw-bold text-primary">เข้าสู่ระบบเลย</a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // หาช่อง input ทั้งหมดในฟอร์ม แล้วเติม Class ของ Bootstrap เข้าไป
+        var inputs = document.querySelectorAll('#signup_form input');
+        inputs.forEach(function(input) {
+            input.classList.add('form-control', 'rounded-3', 'p-2');
+            input.placeholder = 'ระบุข้อมูล...';
+        });
+    });
+</script>
+{% endblock %}
