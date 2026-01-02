@@ -2,8 +2,7 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-sm">
+    <div class="col-md-8 col-lg-8"> <div class="card shadow-sm" id="inputSection" {% if preview_data %}style="display:none;"{% endif %}>
             <div class="card-body p-4">
                 <h4 class="card-title fw-bold text-primary mb-3">📝 บันทึกรายการด่วน</h4>
                 <p class="text-muted small mb-4">พิมพ์รายการที่ต้องการ ระบบจะแยกข้อมูลให้อัตโนมัติ</p>
@@ -11,9 +10,9 @@
                 <div class="alert alert-light border border-secondary-subtle text-secondary mb-3">
                     <small>
                         <b>💡 ตัวอย่างการพิมพ์:</b><br>
-                        12/12/25 <span class="text-muted">(เปลี่ยนวันที่)</span><br>
+                        12/12/25 <span class="text-muted">(หากต้องการเปลี่ยนวันที่)</span><br>
                         -50 ข้าวผัด <span class="text-muted">(รายจ่าย)</span><br>
-                        +1000 เงินเดือน <span class="text-muted">(รายรับ)</span>
+                        1000 เงินเดือน <span class="text-muted">(รายรับ)</span>
                     </small>
                 </div>
 
@@ -23,11 +22,233 @@
                         {{ form.raw_data }}
                     </div>
                     <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
-                        บันทึกข้อมูล
+                        ตรวจสอบข้อมูล
                     </button>
                 </form>
             </div>
         </div>
+
+        <div class="card shadow-sm" id="previewSection" {% if not preview_data %}style="display:none;"{% endif %}>
+            <div class="card-body p-4">
+                <h4 class="fw-bold text-primary mb-3">🔎 ตรวจสอบรายการ</h4>
+                <p class="text-muted small">โปรดตรวจสอบข้อมูลก่อนบันทึก (สามารถแก้ไขหรือลบได้)</p>
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>วันที่</th>
+                                <th>รายการ</th>
+                                <th>จำนวนเงิน</th>
+                                <th>หมวดหมู่</th>
+                                <th class="text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableBody">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <form method="post" id="confirmForm" class="w-50">
+                        {% csrf_token %}
+                        <input type="hidden" name="confirm_save" value="true">
+                        <input type="hidden" name="final_data" id="finalDataInput">
+                        <button type="button" onclick="submitData()" class="btn btn-success w-100 fw-bold">ยืนยันบันทึกข้อมูล</button>
+                    </form>
+                    <a href="" class="btn btn-light border w-50">ยกเลิก / ทำใหม่</a>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
+
+<div class="modal fade" id="editRowModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold text-primary">✏️ แก้ไขรายการ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editIndex">
+                <div class="mb-3">
+                    <label class="small fw-bold text-secondary">วันที่</label>
+                    <input type="date" id="editDate" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-secondary">รายการ</label>
+                    <input type="text" id="editDesc" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-secondary">จำนวนเงิน</label>
+                    <input type="number" id="editAmount" step="0.01" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-secondary">หมวดหมู่</label>
+                    <select id="editCat" class="form-select">
+                        <option value="">- ไม่ระบุ -</option>
+                        <optgroup label="📥 รายรับ">
+                            {% for cat in income_cats %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                        <optgroup label="📤 รายจ่าย">
+                            {% for cat in expense_cats %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-primary w-100 rounded-pill" onclick="saveEdit()">บันทึกการแก้ไข</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deletePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <span style="font-size: 3rem;">🗑️</span>
+                </div>
+                <h5 class="fw-bold mb-2">ลบรายการนี้?</h5>
+                <p class="text-muted small mb-4">รายการจะถูกลบออกจากตารางตรวจสอบ</p>
+                
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-danger rounded-pill px-3 fw-bold" onclick="confirmDelete()">ลบรายการ</button>
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ยกเลิก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if preview_data %}
+    {{ preview_data|json_script:"preview-data-source" }}
+{% endif %}
+
+<script>
+    let tableData = [];
+    let editModal = null;
+    let deleteModal = null; // 1. ตัวแปรเก็บ Modal ลบ
+    let indexToDelete = null; // 2. ตัวแปรจำว่ากำลังจะลบแถวไหน
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // โหลดข้อมูล Preview
+        const dataScript = document.getElementById('preview-data-source');
+        if (dataScript) {
+            try {
+                tableData = JSON.parse(dataScript.textContent);
+                renderTable();
+            } catch (e) {
+                console.error("Error parsing JSON:", e);
+            }
+        }
+
+        // เตรียม Modal แก้ไข
+        const editModalEl = document.getElementById('editRowModal');
+        if (editModalEl) {
+            editModal = new bootstrap.Modal(editModalEl);
+        }
+
+        // 3. เตรียม Modal ลบ
+        const deleteModalEl = document.getElementById('deletePreviewModal');
+        if (deleteModalEl) {
+            deleteModal = new bootstrap.Modal(deleteModalEl);
+        }
+    });
+
+    function renderTable() {
+        const tbody = document.getElementById('previewTableBody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+
+        tableData.forEach((row, index) => {
+            let colorClass = row.amount < 0 ? 'text-danger' : 'text-success';
+            let catBadge = (row.category_name && row.category_name !== '-' && row.category_name !== 'None')
+                ? `<span class="badge bg-light text-dark border">${row.category_name}</span>` 
+                : `<span class="text-muted small">-</span>`;
+
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="small">${row.date}</td>
+                <td class="fw-bold">${row.description}</td>
+                <td class="${colorClass} fw-bold">${parseFloat(row.amount).toFixed(2)}</td>
+                <td>${catBadge}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle p-1" onclick="openEdit(${index})" style="width:30px;height:30px;">✏️</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-1 ms-1" onclick="openDeleteModal(${index})" style="width:30px;height:30px;">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 5. ฟังก์ชันเปิด Modal ลบ
+    function openDeleteModal(index) {
+        if (!deleteModal) return;
+        indexToDelete = index; // จำไว้ว่าจะลบตัวที่เท่าไหร่
+        deleteModal.show();    // เปิด Modal
+    }
+
+    // 6. ฟังก์ชันยืนยันการลบ (กดปุ่มแดงใน Modal)
+    function confirmDelete() {
+        if (indexToDelete !== null) {
+            tableData.splice(indexToDelete, 1); // ลบข้อมูลใน Array
+            renderTable(); // วาดตารางใหม่
+            deleteModal.hide(); // ปิด Modal
+            indexToDelete = null; // เคลียร์ค่า
+        }
+    }
+
+    function openEdit(index) {
+        if (!editModal) return;
+
+        const row = tableData[index];
+        document.getElementById('editIndex').value = index;
+        document.getElementById('editDate').value = row.date;
+        document.getElementById('editDesc').value = row.description;
+        document.getElementById('editAmount').value = row.amount;
+        
+        const catSelect = document.getElementById('editCat');
+        catSelect.value = row.category_id || "";
+
+        editModal.show();
+    }
+
+    function saveEdit() {
+        const index = document.getElementById('editIndex').value;
+        const catSelect = document.getElementById('editCat');
+        
+        tableData[index] = {
+            date: document.getElementById('editDate').value,
+            description: document.getElementById('editDesc').value,
+            amount: parseFloat(document.getElementById('editAmount').value),
+            category_id: catSelect.value,
+            category_name: catSelect.options[catSelect.selectedIndex].text
+        };
+        
+        if (tableData[index].category_id === "") {
+            tableData[index].category_name = "-";
+        }
+
+        renderTable();
+        editModal.hide();
+    }
+
+    function submitData() {
+        if (tableData.length === 0) {
+            alert("ไม่มีข้อมูลที่จะบันทึก");
+            return;
+        }
+        document.getElementById('finalDataInput').value = JSON.stringify(tableData);
+        document.getElementById('confirmForm').submit();
+    }
+</script>
 {% endblock %}

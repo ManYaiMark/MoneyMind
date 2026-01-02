@@ -7,7 +7,7 @@ class SmartInputForm(forms.Form):
         widget=forms.Textarea(attrs={
             'class': 'form-control',
             'rows': 5,
-            'placeholder': 'เช่น\nข้าวเช้า 50\nค่ารถ 20\n100 ค่าหวย'
+            'placeholder': '(หากไม่พิมวันที่จะเป็นวันที่บันทึก) เช่น \nข้าวเช้า -50\n-20 ค่ารถ\nเงินเดือน 15000'
         }),
         label=''
     )

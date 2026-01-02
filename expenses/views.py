@@ -19,65 +19,316 @@ from .forms import SmartInputForm, CategoryForm, BudgetForm , UploadFileForm , T
 
 @login_required
 def add_smart_transaction(request):
+    preview_data = None
+    form = SmartInputForm()  # ✅ ประกาศตรงนี้เพื่อกัน Error UnboundLocal
+    
     if request.method == 'POST':
-        form = SmartInputForm(request.POST)
-        if form.is_valid():
-            raw_data = form.cleaned_data['raw_data']
-            current_date = datetime.now().date()
-            lines = raw_data.strip().split('\n')
-            
-            for line in lines:
-                line = line.strip()
-                if not line: continue
+        if 'confirm_save' in request.POST:
+            # --- ส่วนบันทึกข้อมูล (Save) ---
+            try:
+                json_data = request.POST.get('final_data')
+                data_list = json.loads(json_data)
+                
+                txns = []
+                for item in data_list:
+                    date_obj = datetime.strptime(item['date'], '%Y-%m-%d').date()
+                    
+                    cat_obj = None
+                    if item['category_id']:
+                        cat_obj = Category.objects.filter(id=item['category_id']).first()
+                    
+                    txns.append(Transaction(
+                        user=request.user,
+                        description=item['description'],
+                        amount=float(item['amount']),
+                        date=date_obj,
+                        category=cat_obj
+                    ))
+                
+                if txns:
+                    Transaction.objects.bulk_create(txns)
+                    messages.success(request, f"บันทึกสำเร็จ {len(txns)} รายการ!")
+                    return redirect('dashboard')
+            except Exception as e:
+                messages.error(request, f"เกิดข้อผิดพลาดในการบันทึก: {e}")
 
-                date_match = re.search(r'(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})', line)
-                if date_match and len(line) <= 10: 
-                    day, month, year = map(int, date_match.groups())
-                    if year < 100: year += 2000 
+        else:
+            # --- ส่วนตรวจสอบข้อมูล (Preview) ---
+            form = SmartInputForm(request.POST)
+            if form.is_valid():
+                raw_data = form.cleaned_data['raw_data']
+                lines = raw_data.strip().split('\n')
+                preview_list = []
+                current_date = datetime.now().date()
+
+                for line in lines:
+                    line = line.strip()
+                    if not line: continue
+
+                    date_match = re.search(r'(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})', line)
+                    if date_match and len(line) <= 10:
+                        day, month, year = map(int, date_match.groups())
+                        if year < 100: year += 2000
+                        try:
+                            current_date = datetime(year, month, day).date()
+                        except ValueError: pass
+                        continue
+
+                    amount_match = re.search(r'([+-]?\d+(\.\d+)?)', line)
+                    if amount_match:
+                        amount_str = amount_match.group(1)
+                        amount_val = float(amount_str)
+                        
+                        if '-' in amount_str: 
+                            final_amount = -abs(amount_val) 
+                        else: 
+                            final_amount = abs(amount_val)  
+
+                        description = line.replace(amount_str, '').strip()
+                        if date_match: description = description.replace(date_match.group(0), '').strip()
+                        if not description: description = "รายการทั่วไป"
+
+                        category_id = ""
+                        category_name = "-"
+                        prev_txn = Transaction.objects.filter(user=request.user, description__iexact=description).order_by('-created_at').first()
+                        if prev_txn and prev_txn.category:
+                            category_id = prev_txn.category.id
+                            category_name = prev_txn.category.name
+                        
+                        preview_list.append({
+                            'date': current_date.strftime('%Y-%m-%d'),
+                            'description': description,
+                            'amount': final_amount,
+                            'category_id': category_id,
+                            'category_name': category_name
+                        })
+                
+                # ✅ แก้ไขจุดที่ 1: ส่ง list ไปตรงๆ ไม่ต้อง json.dumps()
+                preview_data = preview_list 
+
+    income_cats = Category.objects.filter(Q(is_global=True) | Q(user=request.user), type='INCOME').order_by('name')
+    expense_cats = Category.objects.filter(Q(is_global=True) | Q(user=request.user), type='EXPENSE').order_by('name')
+
+    return render(request, 'expenses/add_smart.html', {
+        'form': form, 
+        'preview_data': preview_data,
+        'income_cats': income_cats,
+        'expense_cats': expense_cats
+    })
+
+
+@login_required
+def import_data(request):
+    preview_data = None
+    form = UploadFileForm()
+
+    if request.method == 'POST':
+        if 'confirm_save' in request.POST:
+            # --- ส่วนบันทึกข้อมูล (Save) ---
+            try:
+                json_data = request.POST.get('final_data')
+                data_list = json.loads(json_data)
+                
+                txns = []
+                for item in data_list:
+                    # แปลงวันที่
                     try:
-                        current_date = datetime(year, month, day).date()
-                    except ValueError: pass
-                    continue 
+                        date_obj = datetime.strptime(item['date'], '%Y-%m-%d').date()
+                    except:
+                        date_obj = datetime.now().date()
 
-                amount_match = re.search(r'([+-]?\d+(\.\d+)?)', line)
-                if amount_match:
-                    amount_str = amount_match.group(1)
-                    amount_val = float(amount_str)
+                    # หาหมวดหมู่
+                    cat_obj = None
+                    if item.get('category_id'):
+                        cat_obj = Category.objects.filter(id=item['category_id']).first()
                     
-                    if '-' in amount_str: final_amount = amount_val 
-                    elif '+' in amount_str: final_amount = amount_val
-                    else: final_amount = -abs(amount_val)
+                    # ตรวจสอบ Logic เครื่องหมาย +/- (ตามที่แก้ไปล่าสุด)
+                    # ข้อมูลที่ส่งมา final_data คือค่าที่ User เห็นในตารางแล้ว (ถูกจัดการเรื่องเครื่องหมายมาแล้วจาก Step 1)
+                    # ดังนั้นบันทึกตามค่าที่ส่งมาได้เลย
+                    
+                    txns.append(Transaction(
+                        user=request.user,
+                        description=item['description'],
+                        amount=float(item['amount']),
+                        date=date_obj,
+                        category=cat_obj
+                    ))
+                
+                if txns:
+                    Transaction.objects.bulk_create(txns)
+                    messages.success(request, f"นำเข้าสำเร็จ {len(txns)} รายการ!")
+                    return redirect('dashboard')
+                else:
+                    messages.warning(request, "ไม่มีข้อมูลให้บันทึก")
 
-                    description = line.replace(amount_str, '').strip()
-                    if date_match: description = description.replace(date_match.group(0), '').strip()
-                    if not description: description = "รายการทั่วไป"
+            except Exception as e:
+                messages.error(request, f"เกิดข้อผิดพลาด: {e}")
 
-                    category = None
+        else:
+            # --- ส่วนตรวจสอบไฟล์ (Preview) ---
+            form = UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                file = request.FILES['file']
+                tmp_file_path = None
+                
+                try:
+                    # 1. สร้าง Temp File
+                    suffix = '.xlsx'
+                    if file.name.endswith('.csv'): suffix = '.csv'
+                    elif file.name.endswith('.xls'): suffix = '.xls'
+                    elif file.name.endswith('.txt'): suffix = '.txt'
                     
-                    prev_txn = Transaction.objects.filter(user=request.user, description__iexact=description).order_by('-created_at').first()
-                    if prev_txn: category = prev_txn.category
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                        for chunk in file.chunks():
+                            tmp.write(chunk)
+                        tmp_file_path = tmp.name
+
+                    # 2. อ่านไฟล์
+                    df = pd.DataFrame()
+                    data_list = [] # สำหรับ Text File
+
+                    if file.name.endswith('.txt'):
+                        # Logic อ่าน Text File
+                        current_date = datetime.now().date()
+                        with open(tmp_file_path, 'r', encoding='utf-8') as f:
+                            for line in f:
+                                line = line.strip()
+                                if not line: continue
+                                
+                                # เช็ควันที่
+                                date_match = re.match(r'^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$', line)
+                                if date_match:
+                                    d, m, y = map(int, date_match.groups())
+                                    if y < 100: y += 2000
+                                    try: current_date = datetime(y, m, d).date()
+                                    except ValueError: pass
+                                    continue 
+                                
+                                # เช็คยอดเงิน
+                                amount_match = re.search(r'([+-]?\d+(\.\d+)?)', line)
+                                if amount_match:
+                                    amt_str = amount_match.group(1)
+                                    try: amount_val = float(amt_str)
+                                    except ValueError: continue
+                                    
+                                    # Logic ใหม่: ถ้ามี - เป็นลบ, ถ้าไม่มี หรือมี + เป็นบวกเสมอ
+                                    if '-' in amt_str:
+                                        final_amount = -abs(amount_val)
+                                    else:
+                                        final_amount = abs(amount_val)
+
+                                    description = line.replace(amt_str, '').strip() or "รายการทั่วไป"
+                                    data_list.append({'date': current_date, 'amount': final_amount, 'description': description, 'category': None})
+                        
+                        df = pd.DataFrame(data_list)
                     
-                    Transaction.objects.create(
-                        user=request.user if request.user.is_authenticated else None, 
-                        amount=final_amount,
-                        description=description,
-                        date=current_date,
-                        category=category
-                    )
+                    else:
+                        # Logic อ่าน Excel/CSV
+                        if file.name.endswith('.csv'): df = pd.read_csv(tmp_file_path, encoding='utf-8-sig')
+                        elif file.name.endswith('.xls'): df = pd.read_excel(tmp_file_path, engine='xlrd')
+                        else: df = pd.read_excel(tmp_file_path, engine='openpyxl')
+                        
+                        # Clean หัวตาราง
+                        df.columns = df.columns.str.strip()
+                        column_mapping = {
+                            'วันที่': 'date', 'Date': 'date', 'date': 'date',
+                            'รายการ': 'description', 'Description': 'description', 'description': 'description',
+                            'จำนวนเงิน': 'amount', 'Amount': 'amount', 'amount': 'amount','จำนวน': 'amount',
+                            'หมวดหมู่': 'category', 'Category': 'category', 'category': 'category'
+                        }
+                        df.rename(columns=column_mapping, inplace=True)
+
+                    # 3. แปลงข้อมูลลง Preview List
+                    preview_list = []
+                    
+                    # ตรวจสอบว่ามี Column สำคัญครบไหม
+                    if 'amount' in df.columns and 'description' in df.columns:
+                        df.dropna(subset=['amount', 'description'], inplace=True)
+                        
+                        for _, row in df.iterrows():
+                            try:
+                                amt = float(row['amount'])
+                                if pd.isna(amt): continue
+
+                                # จัดการวันที่
+                                if 'date' in df.columns:
+                                    raw_date = row['date']
+                                    if isinstance(raw_date, str):
+                                        txn_date = pd.to_datetime(raw_date, dayfirst=True).date()
+                                    elif isinstance(raw_date, (datetime, pd.Timestamp)):
+                                        txn_date = raw_date.date()
+                                    else:
+                                        txn_date = datetime.now().date()
+                                else:
+                                    txn_date = datetime.now().date()
+
+                                # จัดการหมวดหมู่
+                                cat_id = ""
+                                cat_name = "-"
+                                if 'category' in df.columns and pd.notna(row['category']):
+                                    cat_name_str = str(row['category']).strip()
+                                    c = Category.objects.filter(name__iexact=cat_name_str).first()
+                                    if c: 
+                                        cat_id = c.id
+                                        cat_name = c.name
+                                elif file.name.endswith('.txt'):
+                                    prev = Transaction.objects.filter(user=request.user, description__iexact=str(row['description'])).first()
+                                    if prev and prev.category:
+                                        cat_id = prev.category.id
+                                        cat_name = prev.category.name
+
+                                # Logic เครื่องหมาย Excel: ยึดตามค่าใน Excel เลย (ถ้า Excel ติดลบ ก็ลบ)
+                                # แต่ถ้า Excel เป็นบวก แล้วอยากให้เป็นรายรับ ก็ไม่ต้องทำอะไร
+                                # (Logic นี้ยืดหยุ่นกว่าบังคับลบ)
+                                
+                                preview_list.append({
+                                    'date': txn_date.strftime('%Y-%m-%d'),
+                                    'description': str(row['description']).strip(),
+                                    'amount': amt,
+                                    'category_id': cat_id,
+                                    'category_name': cat_name
+                                })
+                            except: continue
+                    else:
+                        
+                        missing = []
+                        if 'amount' not in df.columns: missing.append('จำนวนเงิน (Amount)')
+                        if 'description' not in df.columns: missing.append('รายการ (Description)')
+                        messages.error(request, f"ไฟล์ไม่ถูกต้อง ขาดคอลัมน์: {', '.join(missing)}")
+
+                    if preview_list:
+                        preview_data = preview_list # ส่ง List ไปตรงๆ
+                    else:
+                        if not messages.get_messages(request): # ถ้ายังไม่มี Error อื่น
+                            messages.warning(request, "ไม่พบข้อมูลรายการในไฟล์ (หรือชื่อหัวตารางไม่ถูกต้อง)")
+
+                except Exception as e:
+                    messages.error(request, f"เกิดข้อผิดพลาดในการอ่านไฟล์: {e}")
+                finally:
+                    if tmp_file_path and os.path.exists(tmp_file_path): os.remove(tmp_file_path)
             
-            messages.success(request, "บันทึกข้อมูลเรียบร้อยแล้ว!")
-            return redirect('add_smart_transaction')
-    else:
-        form = SmartInputForm()
+            else:
+                # กรณี Form Invalid (เช่น นามสกุลไฟล์ผิด)
+                messages.error(request, f"ข้อมูลไฟล์ไม่ถูกต้อง: {form.errors}")
 
-    return render(request, 'expenses/add_smart.html', {'form': form})
+    # Query หมวดหมู่เหมือนเดิม
+    income_cats = Category.objects.filter(Q(is_global=True) | Q(user=request.user), type='INCOME').order_by('name')
+    expense_cats = Category.objects.filter(Q(is_global=True) | Q(user=request.user), type='EXPENSE').order_by('name')
+
+    return render(request, 'expenses/import_data.html', {
+        'form': form, 
+        'preview_data': preview_data,
+        'income_cats': income_cats,
+        'expense_cats': expense_cats
+    })
 
 
+
+# ฟังก์ชัน download_template ใช้ของเดิมได้เลยครับ ไม่ต้องแก้
 @login_required
 def download_template(request):
     file_format = request.GET.get('format', 'xlsx')
     
-    # ข้อมูลตัวอย่างสำหรับ Excel/CSV
     data = {
         'วันที่': ['25/12/2025', '26/12/2025'],
         'รายการ': ['เงินเดือน', 'ค่าอาหาร'],
@@ -93,7 +344,6 @@ def download_template(request):
         return response
     
     elif file_format == 'txt':
-        # สร้างเนื้อหาไฟล์ Text ตามรูปแบบที่คุณต้องการ
         content = """25/12/2025
 25000 เงินเดือน
 -150 ค่าอาหาร
@@ -105,159 +355,13 @@ def download_template(request):
         response['Content-Disposition'] = 'attachment; filename="moneymind_template.txt"'
         return response
         
-    else: # Default เป็น Excel
+    else: 
         df = pd.DataFrame(data)
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
         response['Content-Disposition'] = 'attachment; filename="moneymind_template.xlsx"'
         df.to_excel(response, index=False)
         return response
-
-@login_required
-def import_data(request):
-    if request.method == 'POST':
-        form = UploadFileForm(request.POST, request.FILES)
-        if form.is_valid():
-            file = request.FILES['file']
-            tmp_file_path = None
-            
-            try:
-                suffix = '.xlsx'
-                if file.name.endswith('.csv'): suffix = '.csv'
-                elif file.name.endswith('.xls'): suffix = '.xls'
-                elif file.name.endswith('.txt'): suffix = '.txt'
-                
-                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                    for chunk in file.chunks():
-                        tmp.write(chunk)
-                    tmp_file_path = tmp.name
-
-                if file.name.endswith('.csv'):
-                    df = pd.read_csv(tmp_file_path, encoding='utf-8-sig')
-                elif file.name.endswith('.xls'):
-                    df = pd.read_excel(tmp_file_path, engine='xlrd')
-                elif file.name.endswith('.xlsx'):
-                    df = pd.read_excel(tmp_file_path, engine='openpyxl')
-                elif file.name.endswith('.txt'):
-                    
-                    data_list = []
-                    current_date = datetime.now().date()
-                    
-                    with open(tmp_file_path, 'r', encoding='utf-8') as f:
-                        for line in f:
-                            line = line.strip()
-                            if not line: continue
-                            
-                            # 1. เช็คว่าเป็นบรรทัด "วันที่" หรือไม่ (เช่น 25/12/2025)
-                            date_match = re.match(r'^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$', line)
-                            if date_match:
-                                d, m, y = map(int, date_match.groups())
-                                if y < 100: y += 2000
-                                try:
-                                    current_date = datetime(y, m, d).date()
-                                except ValueError: pass
-                                continue 
-
-                            # 2. ถ้าไม่ใช่บรรทัดวันที่ ให้มองเป็น "รายการ"
-                            amount_match = re.search(r'([+-]?\d+(\.\d+)?)', line)
-                            if amount_match:
-                                amt_str = amount_match.group(1)
-                                try:
-                                    amount_val = float(amt_str)
-                                    final_amount = amount_val 
-                                except ValueError: continue
-
-                                description = line.replace(amt_str, '').strip()
-                                if not description: description = "รายการทั่วไป"
-                                
-                                data_list.append({
-                                    'date': current_date,
-                                    'amount': final_amount,
-                                    'description': description,
-                                    'category': None 
-                                })
-                    
-                    df = pd.DataFrame(data_list)
-
-                # จัดการ Header สำหรับไฟล์ Excel/CSV (Text file ผ่านขั้นตอนนี้ไปแล้ว)
-                if not file.name.endswith('.txt'):
-                    df.columns = df.columns.str.strip()
-                    column_mapping = {
-                        'วันที่': 'date', 'Date': 'date', 'date': 'date',
-                        'รายการ': 'description', 'Description': 'description', 'description': 'description', 'ชื่อรายการ': 'description',
-                        'จำนวนเงิน': 'amount', 'Amount': 'amount', 'amount': 'amount', 'ราคา': 'amount', 'จำนวน': 'amount',
-                        'หมวดหมู่': 'category', 'Category': 'category', 'category': 'category'
-                    }
-                    df.rename(columns=column_mapping, inplace=True)
-
-                if 'amount' in df.columns and 'description' in df.columns:
-                    df.dropna(subset=['amount', 'description'], inplace=True)
-                
-                # ตรวจสอบว่ามี Column ครบไหม
-                required_cols = ['date', 'amount', 'description']
-                missing_cols = [col for col in required_cols if col not in df.columns]
-                
-                if missing_cols:
-                    messages.error(request, f"ไฟล์ไม่ถูกต้อง! ขาดคอลัมน์: {', '.join(missing_cols)}")
-                    os.remove(tmp_file_path)
-                    return redirect('import_data')
-
-                # เตรียมบันทึกลง Database
-                transactions_to_create = []
-                
-                for _, row in df.iterrows():
-                    try:
-                        amt = float(row['amount'])
-                        if pd.isna(amt): continue
-                    except: continue
-
-                    try:
-                        if isinstance(row['date'], str):
-                            txn_date = pd.to_datetime(row['date'], dayfirst=True).date()
-                        else:
-                            txn_date = row['date']
-                    except:
-                        txn_date = datetime.now().date()
-
-                    cat_obj = None
-                    # พยายามหาหมวดหมู่
-                    if 'category' in df.columns and pd.notna(row['category']):
-                        cat_name = str(row['category']).strip()
-                        cat_obj = Category.objects.filter(name__iexact=cat_name).first()
-                    elif file.name.endswith('.txt'):
-                        # เดาหมวดหมู่จากประวัติเก่า
-                        prev = Transaction.objects.filter(user=request.user, description__iexact=str(row['description'])).first()
-                        if prev: cat_obj = prev.category
-
-                    transactions_to_create.append(
-                        Transaction(
-                            user=request.user,
-                            description=str(row['description']).strip(),
-                            amount=amt,
-                            date=txn_date,
-                            category=cat_obj
-                        )
-                    )
-
-                if transactions_to_create:
-                    Transaction.objects.bulk_create(transactions_to_create)
-                    messages.success(request, f"นำเข้าข้อมูลสำเร็จ {len(transactions_to_create)} รายการ!")
-                else:
-                    messages.warning(request, "ไม่พบข้อมูลที่นำเข้าได้")
-                
-            except Exception as e:
-                messages.error(request, f"เกิดข้อผิดพลาด: {str(e)}")
-            
-            finally:
-                if tmp_file_path and os.path.exists(tmp_file_path):
-                    os.remove(tmp_file_path)
-                
-            return redirect('dashboard')
-    else:
-        form = UploadFileForm()
-
-    return render(request, 'expenses/import_data.html', {'form': form})
-
-
+    
 
 @login_required
 def dashboard(request):
@@ -340,6 +444,17 @@ def delete_transaction(request, transaction_id):
     transaction = get_object_or_404(Transaction, id=transaction_id, user=request.user)
     transaction.delete()
     messages.success(request, "ลบรายการเรียบร้อย!")
+    return redirect('transaction_list')
+
+@login_required
+def delete_multiple_transactions(request):
+    if request.method == 'POST':
+        transaction_ids = request.POST.getlist('transaction_ids')
+        if transaction_ids:
+            Transaction.objects.filter(id__in=transaction_ids, user=request.user).delete()
+            messages.success(request, f"ลบข้อมูลที่เลือกเรียบร้อยแล้ว!")
+        else:
+            messages.warning(request, "ไม่ได้เลือกรายการใดๆ")
     return redirect('transaction_list')
 
 def manage_categories(request):
