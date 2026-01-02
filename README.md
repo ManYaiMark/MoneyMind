@@ -2,8 +2,7 @@
 
 **MoneyMind** คือเว็บแอปพลิเคชันสำหรับจัดการรายรับ-รายจ่ายส่วนบุคคลที่เน้นความ "ง่าย" และ "รวดเร็ว" พัฒนาด้วย **Django Framework** มาพร้อมกับระบบ **Smart Input** ที่ช่วยให้คุณจดบันทึกได้เหมือนการพิมพ์แชท และระบบ **Data Import** ที่รองรับไฟล์จากภายนอกได้อย่างสมบูรณ์แบบ
 
-![MoneyMind Cover](screenshots/dashboard_cover.png)
-*(แนะนำให้เอารูป Dashboard มาใส่ตรงนี้ครับ)*
+![MoneyMind Cover](screenshots/Dashboard.png)
 
 ## ✨ ฟีเจอร์หลัก (Key Features)
 
@@ -39,11 +38,11 @@
 
 | Smart Input & Preview | Import Data |
 | --------------------- | ----------- |
-| ![Smart Input](screenshots/image_71e9ad.png) | ![Import](screenshots/image_71e9ae.png) |
+| ![Smart Input](screenshots/smart.png) | ![Import](screenshots/import.png) |
 
 | Transaction History | Budgeting |
 | ------------------- | --------- |
-| ![History](screenshots/image_391be8.png) | *(ใส่รูปหน้างบประมาณ)* |
+| ![History](screenshots/history.png) | ![Budget](screenshots/budget.png) |
 
 ---
 
