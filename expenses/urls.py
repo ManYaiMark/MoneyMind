@@ -7,6 +7,8 @@ urlpatterns = [
     path('add/', views.add_smart_transaction, name='add_smart_transaction'),
     path('import/', views.import_data, name='import_data'),
     path('import/template/', views.download_template, name='download_template'),
+    path('ai-manager/', views.ai_manager, name='ai_manager'),
+    path('ai-manager/template/', views.download_ai_template, name='download_ai_template'),
 
     path('transactions/', views.transaction_list, name='transaction_list'),
     path('transaction/edit/<int:transaction_id>/', views.edit_transaction, name='edit_transaction'),

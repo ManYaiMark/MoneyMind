@@ -5,7 +5,14 @@ openpyxl
 Pillow
 xlrd
 
+# oauth
 requests
 PyJWT
 cryptography
 requests-oauthlib
+
+# ai
+scikit-learn
+pythainlp
+joblib 
+numpy

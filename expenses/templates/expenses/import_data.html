@@ -64,17 +64,16 @@
                 </div>
 
                 <div class="d-flex gap-2">
-                    <a href="" class="btn btn-light border w-50">ยกเลิก / เลือกไฟล์ใหม่</a>
                     <form method="post" id="confirmForm" class="w-50">
                         {% csrf_token %}
                         <input type="hidden" name="confirm_save" value="true">
                         <input type="hidden" name="final_data" id="finalDataInput">
                         <button type="button" onclick="submitData()" class="btn btn-success w-100 fw-bold">ยืนยันนำเข้าข้อมูล</button>
                     </form>
+                    <a href="" class="btn btn-light border w-50">ยกเลิก / เลือกไฟล์ใหม่</a>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 

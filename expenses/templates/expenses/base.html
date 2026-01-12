@@ -53,6 +53,11 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
+                        {% if user.is_superuser %}
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-bold" href="{% url 'ai_manager' %}">🤖 จัดการ AI (Admin)</a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item"><a class="nav-link text-nowrap" href="{% url 'transaction_list' %}">ประวัติรายการ</a></li>
                         <li class="nav-item"><a class="nav-link text-nowrap" href="{% url 'add_smart_transaction' %}">บันทึกรายการ</a></li>
                         <li class="nav-item"><a class="nav-link text-nowrap" href="{% url 'import_data' %}">นำเข้าไฟล์</a></li>
