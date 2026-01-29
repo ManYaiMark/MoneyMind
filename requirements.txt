@@ -1,5 +1,6 @@
 Django
 django-allauth
+django-cleanup
 pandas
 openpyxl
 Pillow
@@ -16,3 +17,4 @@ scikit-learn
 pythainlp
 joblib 
 numpy
+thefuzz

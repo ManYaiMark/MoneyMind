@@ -1,13 +1,43 @@
-from django import forms
-from .models import Category , Budget , Transaction
+from .models import Category , Budget , Transaction , User , Profile
 from datetime import datetime
+
+from django import forms
+from django.contrib.auth.forms import PasswordChangeForm
+
+class UserUpdateForm(forms.ModelForm):
+    email = forms.EmailField(label='อีเมล', widget=forms.TextInput(attrs={'class': 'form-control'}))
+    first_name = forms.CharField(label='ชื่อจริง', required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(label='นามสกุล', required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email'] 
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ถ้ามี instance (คือ User ที่ล็อกอินอยู่) และเขามาจาก Google
+        if self.instance.pk and self.instance.profile.is_google_login:
+            self.fields['email'].disabled = True # ล็อคไม่ให้แก้
+            self.fields['email'].help_text = "ล็อกอินผ่าน Google ไม่สามารถเปลี่ยนอีเมลได้"
+
+
+class ProfileImageForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['profile_picture','avatar_color'] # ✅ แก้เป็น profile_picture
+        labels = {'profile_picture': 'รูปโปรไฟล์',
+                'avatar_color': 'สีของ Avatar'}
+        widgets = {
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
+            'avatar_color': forms.HiddenInput()
+        }
 
 class SmartInputForm(forms.Form):
     raw_data = forms.CharField(
         widget=forms.Textarea(attrs={
             'class': 'form-control',
             'rows': 5,
-            'placeholder': '(หากไม่พิมวันที่จะเป็นวันที่บันทึก) เช่น \nข้าวเช้า -50\n-20 ค่ารถ\nเงินเดือน 15000'
+            'placeholder': '(หากไม่พิมวันที่จะเป็นวันที่บันทึก) เช่น \n-50 ข้าวเช้า\n-20 ค่ารถ\n15000 เงินเดือน'
         }),
         label=''
     )

@@ -9,7 +9,11 @@
                 <h1 class="display-4 mb-3">🧠</h1>
                 <h2 class="fw-bold text-primary mb-2">MoneyMind</h2>
                 <p class="text-muted mb-4">จัดการการเงินของคุณให้เป็นเรื่องง่าย</p>
-
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <p>ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</p>
+                    </div>
+                {% endif %}
                 <a href="{% provider_login_url 'google' %}" class="btn btn-outline-danger w-100 py-3 mb-3 fw-bold rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2">
                     <svg width="20" height="20" viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

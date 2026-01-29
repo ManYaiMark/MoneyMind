@@ -4,9 +4,16 @@ from expenses import views
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'), # ตั้งเป็นหน้าแรก (Home)
+    path('profile/', views.profile, name='profile'),
+    path('profile/delete/', views.delete_account, name='delete_account'),
+
     path('add/', views.add_smart_transaction, name='add_smart_transaction'),
     path('import/', views.import_data, name='import_data'),
     path('import/template/', views.download_template, name='download_template'),
+
+    path('keyword_manager/', views.keyword_manager, name='keyword_manager'),
+    path('keyword_manager/add/', views.add_keyword, name='add_keyword'),
+    # ไม่ไดเใช้แล้ว
     path('ai-manager/', views.ai_manager, name='ai_manager'),
     path('ai-manager/template/', views.download_ai_template, name='download_ai_template'),
 

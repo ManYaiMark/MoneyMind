@@ -1,0 +1,211 @@
+{% extends 'expenses/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 text-center">
+                    
+                    <div class="position-relative d-inline-block mb-3">
+                        <div style="width: 120px; height: 120px;">
+                            {% if user.profile.profile_picture %}
+                                <img src="{{ user.profile.profile_picture.url }}" class="rounded-circle w-100 h-100 object-fit-cover shadow border">
+                            {% else %}
+                                <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center shadow border text-white {{ user.profile.avatar_color|default:user.profile.avatar_color }}" 
+                                    style="font-size: 48px; font-weight: bold;">
+                                    {{ user.first_name|default:user.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <button class="btn btn-light btn-sm border position-absolute bottom-0 end-0 rounded-circle shadow-sm" 
+                                data-bs-toggle="modal" data-bs-target="#imageModal"
+                                style="width: 35px; height: 35px;">
+                            <i class="bi bi-camera-fill text-muted"></i>
+                        </button>
+                    </div>
+                    
+                    <h4 class="fw-bold mt-2">{{ user.first_name }} {{ user.last_name }}</h4>
+                    <p class="text-muted mb-4">{{ user.email }}</p>
+
+                    <div class="d-grid gap-2 col-lg-8 mx-auto">
+                        <button class="btn btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#infoModal">
+                            <i class="bi bi-person-gear"></i> แก้ไขข้อมูลส่วนตัว
+                        </button>
+                        
+                        {% if not user.profile.is_google_login %}
+                        <button class="btn btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#passwordModal">
+                            <i class="bi bi-key-fill"></i> เปลี่ยนรหัสผ่าน
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ปรับแต่งรูปโปรไฟล์</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <ul class="nav nav-pills justify-content-center mb-3" id="avatarTab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active rounded-pill" data-bs-toggle="tab" data-bs-target="#color-mode" type="button">เลือกสี</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link rounded-pill" data-bs-toggle="tab" data-bs-target="#image-mode" type="button">อัปรูปภาพ</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active text-center" id="color-mode">
+                            <div class="d-flex justify-content-center gap-2 mt-3">
+                                {% with "bg-primary bg-success bg-danger bg-warning bg-info bg-dark bg-secondary" as colors %}
+                                    {% for color in colors.split %}
+                                        <div class="color-option rounded-circle shadow-sm" onclick="selectColor('{{ color }}')"
+                                            style="width: 40px; height: 40px; cursor: pointer; border: 2px solid transparent;"
+                                            data-color="{{ color }}"><div class="{{ color }} w-100 h-100 rounded-circle"></div></div>
+                                    {% endfor %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="image-mode">
+                            <input type="file" name="profile_picture" id="id_profile_picture" class="form-control mt-3" accept="image/*">
+                        </div>
+                    </div>
+                    
+                    {{ img_form.avatar_color }} </div>
+                <div class="modal-footer">
+                    <button type="submit" name="btn_update_image" class="btn btn-primary">บันทึกรูปภาพ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ข้อมูลส่วนตัว</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">ชื่อจริง</label>
+                        {{ u_form.first_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">นามสกุล</label>
+                        {{ u_form.last_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">อีเมล</label>
+                        {{ u_form.email }}
+                        {% if user.profile.is_google_login %}
+                            <small class="text-danger">*Google Login ไม่สามารถเปลี่ยนอีเมลได้</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="btn_update_info" class="btn btn-primary">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if not user.profile.is_google_login %}
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">เปลี่ยนรหัสผ่าน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    {% for field in pass_form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }} {% if field.errors %}
+                            <div class="text-danger small">{{ field.errors.0 }}</div>
+                        {% endif %}
+                        {% if field.help_text %}
+                            <div class="form-text small text-muted">{{ field.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" name="btn_change_password" class="btn btn-danger">ยืนยันเปลี่ยนรหัส</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    const colorInput = document.getElementById('id_avatar_color');
+    const fileInput = document.getElementById('id_profile_picture');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const colorOptions = document.querySelectorAll('.color-option');
+
+    // 1. ฟังก์ชันเลือกสี
+    function selectColor(colorClass) {
+        // อัปเดตค่าลง Hidden Input
+        colorInput.value = colorClass;
+        
+        // UI: ใส่ขอบให้รู้ว่าเลือกอันไหน
+        colorOptions.forEach(opt => opt.style.border = '2px solid transparent');
+        const selected = document.querySelector(`[data-color="${colorClass}"]`);
+        if(selected) selected.style.border = '2px solid #333'; // ขอบสีดำบอกว่าเลือกอยู่
+
+        // Clear ค่ารูปภาพ (ถ้าเคยเลือกไว้) เพื่อบอกหลังบ้านว่า "เอาสีนะ ไม่เอารูป"
+        fileInput.value = ""; 
+        previewContainer.style.display = 'none';
+    }
+
+    // 2. ฟังก์ชันเมื่อเลือกไฟล์รูป
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // โชว์ Preview
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                uploadPreview.src = evt.target.result;
+                previewContainer.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+
+            // Clear ค่าสีทิ้ง (บอกหลังบ้านว่า "เอารูปนะ ไม่เอาสี")
+            colorInput.value = "";
+            colorOptions.forEach(opt => opt.style.border = '2px solid transparent'); // เอาขอบออก
+        }
+    });
+
+    // (Optional) Init: ถ้ามีสีเดิมอยู่แล้ว ให้ Highlight สีนั้นไว้
+    const currentColor = "{{ user.profile.avatar_color }}";
+    if (currentColor) {
+        const activeOption = document.querySelector(`[data-color="${currentColor}"]`);
+        if (activeOption) activeOption.style.border = '2px solid #333';
+    }
+</script>
+
+{% endblock %}

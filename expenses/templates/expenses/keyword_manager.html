@@ -1,0 +1,195 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary">📚 จัดการคำศัพท์ (Keyword Manager)</h2>
+            <p class="text-muted m-0">ระบบ Fuzzy Logic จะใช้คำศัพท์เหล่านี้ในการจับคู่รายการ</p>
+        </div>
+        <div>
+            <button class="btn btn-success" type="button" data-bs-toggle="collapse" data-bs-target="#importBox">
+                <i class="bi bi-file-earmark-spreadsheet"></i> นำเข้า CSV
+            </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addKeywordModal">
+                <i class="bi bi-plus-circle"></i> เพิ่ม Keyword ใหม่
+            </button>
+
+            <div class="modal fade" id="addKeywordModal" tabindex="-1" aria-labelledby="addKeywordLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addKeywordLabel">จับคู่คำศัพท์กับหมวดหมู่</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <form action="{% url 'add_keyword' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        
+                        <div class="mb-3">
+                            <label for="wordInput" class="form-label">คำค้นหา (Keyword)</label>
+                            <input type="text" class="form-control" id="wordInput" name="word_text" placeholder="เช่น 7-11, เงินเดือน, ค่าเน็ต" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="categorySelect" class="form-label">เลือกหมวดหมู่</label>
+                            <select class="form-select" id="categorySelect" name="category_id" required>
+                                <option value="" selected disabled>-- กรุณาเลือกหมวดหมู่ --</option>
+                                
+                                {% for cat in categories %}
+                                    <option value="{{ cat.id }}">
+                                        {{ cat.name }} ({{ cat.get_type_display }})
+                                    </option>
+                                {% endfor %}
+
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-success">บันทึก</button>
+                    </div>
+                </form>
+                
+                </div>
+            </div>
+        </div>
+    </div>
+        
+    </div>
+
+    <div class="collapse mb-4" id="importBox">
+        <div class="card card-body border-success bg-success bg-opacity-10">
+            <h5 class="fw-bold text-success">📂 นำเข้าคำศัพท์ใหม่</h5>
+            <form method="post" enctype="multipart/form-data" class="row g-3 align-items-center">
+                {% csrf_token %}
+                <div class="col-auto">
+                    <input type="file" name="csv_file" class="form-control" accept=".csv" required>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" name="import_csv" class="btn btn-success">Upload</button>
+                </div>
+                <div class="col-auto">
+                    <small class="text-muted">Format: <code>คำศัพท์,ชื่อหมวดหมู่</code> (ไม่ต้องมีหัวตาราง)</small>
+                    <a href="{% url 'download_template' %}?format=csv" class="text-decoration-none ms-2">⬇️ โหลด Template</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body p-2 bg-light rounded">
+            <form method="get" class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control" placeholder="ค้นหาคำศัพท์..." value="{{ search_query|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- ทุกหมวดหมู่ --</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if current_cat == cat.id|stringformat:"s" %}selected{% endif %}>
+                                {{ cat.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-auto">
+                    <a href="{% url 'keyword_manager' %}" class="btn btn-outline-secondary">ล้างค่า</a>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end mb-3">
+
+</div>
+
+    <form method="post" id="bulkForm">
+        {% csrf_token %}
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <span class="text-muted small">
+                    พบทั้งหมด {{ page_obj.paginator.count }} คำ
+                </span>
+                <button type="submit" name="bulk_delete" class="btn btn-outline-danger btn-sm" onclick="return confirm('⚠️ ยืนยันลบรายการที่เลือก?')">
+                    <i class="bi bi-trash"></i> ลบที่เลือก
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40px;" class="text-center">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th>คำศัพท์ (Keyword)</th>
+                            <th>หมวดหมู่ (Category)</th>
+                            <th class="text-end">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in page_obj %}
+                        <tr>
+                            <td class="text-center">
+                                <input type="checkbox" name="selected_ids" value="{{ item.id }}" class="form-check-input item-check">
+                            </td>
+                            <td class="fw-bold text-primary">{{ item.word }}</td>
+                            <td>
+                                <span class="badge bg-secondary bg-opacity-10 text-dark border">
+                                    {{ item.category.name }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-link text-muted"><i class="bi bi-pencil"></i></button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                                ไม่พบข้อมูลคำศัพท์
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-white d-flex justify-content-end py-3">
+                <nav>
+                    <ul class="pagination pagination-sm m-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page=1&q={{search_query}}&category={{current_cat}}">« แรก</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{search_query}}&category={{current_cat}}">‹ ก่อนหน้า</a></li>
+                        {% endif %}
+
+                        <li class="page-item disabled"><span class="page-link">หน้า {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{search_query}}&category={{current_cat}}">ถัดไป ›</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&q={{search_query}}&category={{current_cat}}">ท้าย »</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('selectAll').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.item-check');
+        checkboxes.forEach(chk => chk.checked = this.checked);
+    });
+    
+</script>
+{% endblock %}

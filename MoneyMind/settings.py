@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +38,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django.contrib.humanize',
+
+    # เพิ่ม
+    'django_cleanup.apps.CleanupConfig',
+
+    # แอพ
     "expenses",
 
     # Login
@@ -47,6 +54,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
 ]
 
+# login
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
@@ -58,8 +66,38 @@ LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = 'dashboard'  
 LOGOUT_REDIRECT_URL = 'account_login'
 
-ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+
+# ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# ชี้ไปที่ไฟล์ที่เราเพิ่งสร้าง (ชื่อแอป.ชื่อไฟล์.ชื่อคลาส)
+# SOCIALACCOUNT_ADAPTER = 'expenses.adapter.MySocialAccountAdapter'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        # ส่วนนี้จะ Print ข้อมูลดิบของ Allauth ออกมา
+        'allauth': {
+            'handlers': ['console'],
+            'level': 'DEBUG',  # ระดับละเอียดสุด (เห็นทุกขั้นตอน)
+        },
+        # ส่วนนี้จะ Print Error ของ Django request (เช่น 500 Error)
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+        },
+    },
+}
+
 
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -153,6 +191,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

@@ -1,138 +1,219 @@
 {% extends 'expenses/base.html' %}
+{% load humanize %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card bg-primary text-white shadow-sm h-100">
-            <div class="card-body">
-                <h6 class="card-title opacity-75">💰 ยอดคงเหลือสุทธิ</h6>
-                <h2 class="fw-bold">{{ balance|floatformat:2 }} บาท</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-success text-success shadow-sm h-100">
-            <div class="card-body">
-                <h6 class="card-title">รายรับรวม</h6>
-                <h3 class="fw-bold">+{{ total_income|floatformat:2 }}</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-danger text-danger shadow-sm h-100">
-            <div class="card-body">
-                <h6 class="card-title">รายจ่ายรวม</h6>
-                <h3 class="fw-bold">-{{ total_expense|floatformat:2 }}</h3>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="container-fluid py-4">
 
-<div class="row mb-4">
-    <div class="col-md-5">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title fw-bold mb-3">สัดส่วนค่าใช้จ่าย</h5>
-                <canvas id="donutChart"></canvas>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
+        <a href="{{ prev_month_url }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+            <i class="bi bi-chevron-double-left"></i> เดือนก่อน
+        </a>
+        
+        <div class="text-center">
+            <h4 class="fw-bold m-0 text-primary">📅 {{ current_month_name }} {{ current_year }}</h4>
+            <small class="text-muted">ดูภาพรวมรายเดือน</small>
         </div>
+        
+        <a href="{{ next_month_url }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+            เดือนถัดไป <i class="bi bi-chevron-double-right"></i>
+        </a>
     </div>
-    <div class="col-md-7">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title fw-bold mb-3">รายรับ-รายจ่าย 7 วันย้อนหลัง</h5>
-                <canvas id="barChart"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="card-title fw-bold">รายการล่าสุด</h5>
-            <a href="{% url 'add_smart_transaction' %}" class="btn btn-sm btn-outline-primary">+ เพิ่มรายการ</a>
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h6 class="card-title opacity-75">💰 ยอดคงเหลือสุทธิ</h6>
+                    <h2 class="fw-bold">{{ balance|floatformat:2|intcomma }} บาท</h2>
+                </div>
+            </div>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>วันที่</th>
-                        <th>รายการ</th>
-                        <th>หมวดหมู่</th>
-                        <th class="text-end">จำนวนเงิน</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for txn in transactions %}
-                    <tr>
-                        <td>{{ txn.date|date:"d M Y" }}</td>
-                        <td>{{ txn.description }}</td>
-                        <td>
-                            {% if txn.category %}
-                                <span class="badge bg-secondary">{{ txn.category.name }}</span>
-                            {% else %}
-                                <span class="badge bg-light text-dark border">ไม่ระบุ</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end fw-bold {% if txn.amount < 0 %}text-danger{% else %}text-success{% endif %}">
-                            {{ txn.amount|floatformat:2 }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center text-muted py-4">ยังไม่มีข้อมูลรายการ</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="col-md-4">
+            <div class="card border-success text-success shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-title">รายรับรวม</h6>
+                    <h3 class="fw-bold">+{{ total_income|floatformat:2|intcomma }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-danger text-danger shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-title">รายจ่ายรวม</h6>
+                    <h3 class="fw-bold">-{{ total_expense|floatformat:2|intcomma }}</h3>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-<div style="height: 40px;">
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3 text-primary">🔮 แนวโน้มรายเดือน ({{ current_month_name }})</h5>
+                    <div style="height: 350px;">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ prev_week_url }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                        <div class="text-center">
+                            <h6 class="m-0 fw-bold text-success">📅 พฤติกรรมรายสัปดาห์</h6>
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill" style="font-size: 0.75rem;">
+                                {{ week_range_str }}
+                            </span>
+                        </div>
+                        <a href="{{ next_week_url }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="card-title fw-bold mb-3">รายการประจำเดือน {{ current_month_name }}</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>วันที่</th>
+                            <th>รายการ</th>
+                            <th>หมวดหมู่</th>
+                            <th class="text-end">จำนวนเงิน</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in transactions %}
+                        <tr>
+                            <td>{{ txn.date|date:"d M Y" }}</td>
+                            <td>{{ txn.description }}</td>
+                            <td>
+                                {% if txn.category %}
+                                    <span class="badge bg-secondary">{{ txn.category.name }}</span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border">ไม่ระบุ</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end fw-bold {% if txn.amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ txn.amount|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-4">ไม่มีรายการ</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div style="height: 40px;"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // 1. Donut Chart Config
-    const ctxDonut = document.getElementById('donutChart').getContext('2d');
-    new Chart(ctxDonut, {
-        type: 'doughnut',
-        data: {
-            labels: {{ donut_labels|safe }},
-            datasets: [{
-                data: {{ donut_data|safe }},
-                backgroundColor: ['#ff7675', '#74b9ff', '#55efc4', '#ffeaa7', '#a29bfe'],
-                borderWidth: 0
-            }]
-        },
-        options: { responsive: true, cutout: '70%' }
+    const chartColors = [
+        '#4e73df', // 1. น้ำเงิน (อาหาร/ทั่วไป)
+        '#1cc88a', // 2. เขียว (เดินทาง)
+        '#e74a3b', // 3. แดง (ช้อปปิ้ง)
+        '#f6c23e', '#36b9cc', '#6f42c1' // สีสำรอง
+    ];
+    
+    // 🎨 สีสำหรับ "ไม่ระบุ" (สีเทาเข้ม)
+    const unknownColor = '#858796'; 
+
+    // --- 1. กราฟเส้น (Line Chart) ---
+    const ctxForecast = document.getElementById('forecastChart').getContext('2d');
+    const lineDatasetsRaw = {{ line_datasets|safe }}; 
+    const forecastLabels = {{ forecast_labels|safe }};
+
+    const lineDatasets = lineDatasetsRaw.map((ds, index) => {
+        // หาว่าเป็นข้อมูลชุดที่เท่าไหร่
+        const pairIndex = Math.floor(index / 2);
+        
+        // 🛠️ Logic เลือกสี:
+        let color;
+        const labelName = ds.label || '';
+
+        // ถ้าชื่อมีคำว่า "ไม่ระบุ" ให้ใช้สีเทาทันที
+        if (labelName.includes('ไม่ระบุ')) {
+            color = unknownColor;
+        } else {
+            // ถ้าไม่ใช่ ให้รันสีตามลำดับปกติ
+            color = chartColors[pairIndex % chartColors.length];
+        }
+
+        if (ds.mode === 'actual') {
+            return {
+                ...ds,
+                borderColor: color,
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                pointRadius: 3,
+                tension: 0.3
+            };
+        } else {
+            return {
+                ...ds,
+                borderColor: color,
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                tension: 0.3
+            };
+        }
     });
 
-    // 2. Bar Chart Config
-    const ctxBar = document.getElementById('barChart').getContext('2d');
-    new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-            labels: {{ bar_labels|safe }},
-            datasets: [
-                {
-                    label: 'รายรับ',
-                    data: {{ bar_income|safe }},
-                    backgroundColor: '#00b894',
-                    borderRadius: 5
-                },
-                {
-                    label: 'รายจ่าย',
-                    data: {{ bar_expense|safe }},
-                    backgroundColor: '#ff7675',
-                    borderRadius: 5
-                }
-            ]
-        },
+    new Chart(ctxForecast, {
+        type: 'line',
+        data: { labels: forecastLabels, datasets: lineDatasets },
         options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true } }
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
+        }
+    });
+
+    // --- 2. กราฟแท่ง (Stacked Bar) ---
+    const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
+    const weeklyLabels = {{ weekly_labels|safe }};
+    let stackedDatasets = {{ stacked_datasets|safe }};
+
+    stackedDatasets.forEach((dataset, index) => {
+        // ถ้า Python ส่งสีมาให้แล้ว (เช่น หมวด 'อื่นๆ') ให้ใช้สีนั้น
+        if (dataset.backgroundColor) return;
+
+        // 🛠️ Logic เลือกสี:
+        if (dataset.label === 'ไม่ระบุ') {
+            dataset.backgroundColor = unknownColor; // บังคับสีเทา
+        } else {
+            dataset.backgroundColor = chartColors[index % chartColors.length];
+        }
+    });
+
+    new Chart(ctxWeekly, {
+        type: 'bar',
+        data: { labels: weeklyLabels, datasets: stackedDatasets },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } },
+            scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true } }
         }
     });
 </script>
