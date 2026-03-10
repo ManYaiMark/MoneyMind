@@ -11,7 +11,11 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+# from environ import Env
 import os
+
+# env = Env()
+# env.read_env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -66,17 +70,32 @@ LOGIN_URL = 'account_login'
 LOGIN_REDIRECT_URL = 'dashboard'  
 LOGOUT_REDIRECT_URL = 'account_login'
 
+#  ไม่สร้างบัญชี Google ซ้อนทับ
+SOCIALACCOUNT_AUTO_SIGNUP = True
+ACCOUNT_PREVENT_ENUMERATION = False
+
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 
-# ACCOUNT_EMAIL_VERIFICATION = "none"
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
-ACCOUNT_EMAIL_REQUIRED = True
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# อนุญาตให้เชื่อมต่ออัตโนมัติถ้าอีเมลตรงกัน
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+
+ACCOUNT_EMAIL_VERIFICATION = "none"
+# ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_EMAIL_REQUIRED = True   
+
+# บังคับว่า 1 อีเมล ต้องมีแค่ 1 บัญชีเท่านั้น ห้ามซ้ำเด็ดขาด
+ACCOUNT_UNIQUE_EMAIL = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
-# ชี้ไปที่ไฟล์ที่เราเพิ่งสร้าง (ชื่อแอป.ชื่อไฟล์.ชื่อคลาส)
-# SOCIALACCOUNT_ADAPTER = 'expenses.adapter.MySocialAccountAdapter'
+# ถ้าอีเมลจาก Google ตรงกับอีเมลในระบบ 
+SOCIALACCOUNT_ADAPTER = 'expenses.adapter.MySocialAccountAdapter'
+ACCOUNT_ADAPTER = 'expenses.adapter.MyAccountAdapter'
+# ACCOUNT_ADAPTER = 'expenses.adapter.CustomAccountAdapter'
 
-LOGGING = {
+LOGGING = { 
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
@@ -98,9 +117,13 @@ LOGGING = {
     },
 }
 
-
+# 'APP': {
+#             'client_id': env('OAUTH_GOOGLE_CLIENT_ID'),
+#             'secret': env('OAUTH_GOOGLE_SECRET'),
+#         },
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
+        
         'SCOPE': [
             'profile',
             'email',

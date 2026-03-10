@@ -1,0 +1,211 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold text-primary mb-1">📂 จัดการหมวดหมู่</h4>
+                            <p class="text-muted small mb-0">สร้างและแก้ไขหมวดหมู่สำหรับบันทึกรายรับ-รายจ่าย</p>
+                        </div>
+                        <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" onclick="resetModal()" data-bs-toggle="modal" data-bs-target="#categoryModal">
+                            <i class="bi bi-plus-lg me-1"></i> เพิ่มหมวดหมู่ใหม่
+                        </button>
+                    </div>
+
+                    <ul class="nav nav-tabs nav-fill mb-3 bg-light rounded-top border-bottom-0" id="catTab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active text-danger fw-bold py-3" data-bs-toggle="tab" data-bs-target="#expense" type="button">
+                                <i class="bi bi-arrow-down-circle me-2"></i> รายจ่าย (Expense)
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link text-success fw-bold py-3" data-bs-toggle="tab" data-bs-target="#income" type="button">
+                                <i class="bi bi-arrow-up-circle me-2"></i> รายรับ (Income)
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content pt-2">
+                        <div class="tab-pane fade show active" id="expense">
+                            {% include "expenses/category_list_table.html" with type='EXPENSE' %}
+                        </div>
+                        <div class="tab-pane fade" id="income">
+                            {% include "expenses/category_list_table.html" with type='INCOME' %}
+                        </div>
+                    </div> 
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header bg-primary bg-opacity-10 text-primary py-3">
+                <h5 class="modal-title" id="modalTitle">📂 จัดการหมวดหมู่</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form id="categoryForm" method="POST" action="{% url 'manage_categories' %}"> 
+                {% csrf_token %}
+                <input type="hidden" name="cat_id" id="categoryId">
+                
+                <div class="modal-body p-4">
+                    
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold small">ชื่อหมวดหมู่</label>
+                            <input type="text" name="name" id="catName" class="form-control bg-light border-0" placeholder="เช่น อาหาร, เดินทาง" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">ประเภท</label>
+                            <select name="type" id="catType" class="form-select bg-light border-0">
+                                <option value="EXPENSE">รายจ่าย</option>
+                                <option value="INCOME">รายรับ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-block">เลือกสีป้าย (Color)</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="color" id="colorPrimary" value="primary" checked>
+                            <label class="btn btn-outline-primary" for="colorPrimary">น้ำเงิน</label>
+
+                            <input type="radio" class="btn-check" name="color" id="colorSuccess" value="success">
+                            <label class="btn btn-outline-success" for="colorSuccess">เขียว</label>
+
+                            <input type="radio" class="btn-check" name="color" id="colorDanger" value="danger">
+                            <label class="btn btn-outline-danger" for="colorDanger">แดง</label>
+
+                            <input type="radio" class="btn-check" name="color" id="colorWarning" value="warning">
+                            <label class="btn btn-outline-warning" for="colorWarning">เหลือง</label>
+
+                            <input type="radio" class="btn-check" name="color" id="colorInfo" value="info">
+                            <label class="btn btn-outline-info" for="colorInfo">ฟ้า</label>
+                            
+                            <input type="radio" class="btn-check" name="color" id="colorSecondary" value="secondary">
+                            <label class="btn btn-outline-secondary" for="colorSecondary">เทา</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small">เลือกไอคอน (Icon)</label>
+                        <div class="border rounded-3 p-2 bg-light" style="max-height: 180px; overflow-y: auto;">
+                            <div class="d-flex flex-wrap gap-2" id="iconContainer"></div>
+                        </div>
+                        <input type="hidden" name="icon" id="selectedIcon" value="bi-tags-fill">
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-0 bg-light rounded-bottom-4">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% for cat in categories %}
+<div class="modal fade" id="deleteModal{{ cat.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-body text-center p-4">
+                <div class="mb-3 text-danger"><i class="bi bi-trash3-fill fs-1"></i></div>
+                <h5 class="fw-bold">ลบหมวดหมู่?</h5>
+                <p class="text-muted small">ต้องการลบ "{{ cat.name }}" ใช่หรือไม่?</p>
+                <div class="d-flex gap-2 justify-content-center mt-3">
+                    <a href="{% url 'delete_category' cat.id %}" class="btn btn-danger rounded-pill px-4 fw-bold text-white">ลบรายการ</a>
+                    <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">ยกเลิก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+        console.log("Manage Categories Page Loaded");
+    // ✅ ย้ายตัวแปรออกมาข้างนอกเพื่อให้ทุกฟังก์ชันเห็น
+    const iconList = [
+        "bi-basket2-fill", "bi-bag-heart-fill", "bi-cart-fill", "bi-shop", 
+        "bi-cup-hot-fill", "bi-egg-fried", "bi-cake2-fill", "bi-cup-straw", 
+        "bi-bus-front-fill", "bi-car-front-fill", "bi-fuel-pump-fill", "bi-airplane-fill", 
+        "bi-house-door-fill", "bi-lightning-charge-fill", "bi-droplet-fill", "bi-wifi", 
+        "bi-cash-coin", "bi-wallet2", "bi-credit-card-fill", "bi-bank2", 
+        "bi-heart-pulse-fill", "bi-bandaid-fill", "bi-hospital-fill", "bi-prescription2", 
+        "bi-controller", "bi-film", "bi-music-note-beamed", "bi-ticket-perforated-fill", 
+        "bi-book-fill", "bi-briefcase-fill", "bi-mortarboard-fill", "bi-laptop", 
+        "bi-phone-fill", "bi-gift-fill", "bi-hammer", "bi-flower1", 
+        "bi-tags-fill", "bi-star-fill", "bi-question-circle-fill", "bi-geo-alt-fill"
+    ];
+
+    // ✅ รันครั้งเดียวเพื่อสร้างไอคอนใน Modal
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("Generating icon list in modal...");
+        const container = document.getElementById('iconContainer');
+        const hiddenInput = document.getElementById('selectedIcon');
+
+        iconList.forEach(iconClass => {
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.className = 'btn-check';
+            radio.name = 'icon_select_radio';
+            radio.id = 'radio_' + iconClass;
+            radio.value = iconClass;
+            
+            radio.addEventListener('change', () => {
+                hiddenInput.value = iconClass;
+            });
+
+            const label = document.createElement('label');
+            label.className = 'btn btn-outline-secondary border-0 p-2';
+            label.htmlFor = 'radio_' + iconClass;
+            label.innerHTML = `<i class="bi ${iconClass} fs-4"></i>`;
+
+            container.appendChild(radio);
+            container.appendChild(label);
+        });
+    });
+
+    // ✅ ✏️ ฟังก์ชันเปิด Modal เพื่อแก้ไข (ต้องอยู่นอก DOMContentLoaded)
+    window.openEditModal = function(id, name, type, icon, color) {
+        document.getElementById('modalTitle').innerText = '✏️ แก้ไขหมวดหมู่: ' + name;
+        document.getElementById('categoryId').value = id;
+        document.getElementById('catName').value = name;
+        document.getElementById('catType').value = type;
+
+        // เลือกสีเดิม
+        const colorRadio = document.getElementById('clr_' + color);
+        if (colorRadio) colorRadio.checked = true;
+
+        // เลือกไอคอนเดิม
+        const iconInput = document.getElementById('selectedIcon');
+        iconInput.value = icon || 'bi-tags-fill';
+        const targetIconRadio = document.getElementById('radio_' + iconInput.value);
+        if (targetIconRadio) targetIconRadio.checked = true;
+    }
+
+    // ✅ ➕ ฟังก์ชัน Reset Modal สำหรับการเพิ่มใหม่
+    window.resetModal = function() {
+        document.getElementById('modalTitle').innerText = '➕ เพิ่มหมวดหมู่ใหม่';
+        document.getElementById('categoryForm').reset();
+        document.getElementById('categoryId').value = ''; // สำคัญ: ล้าง ID เพื่อให้ View รู้ว่าเป็นการเพิ่มใหม่
+        
+        document.getElementById('clr_primary').checked = true;
+        document.getElementById('selectedIcon').value = 'bi-tags-fill';
+        const defaultIcon = document.getElementById('radio_bi-tags-fill');
+        if (defaultIcon) defaultIcon.checked = true;
+    }
+</script>
+{% endblock %}
+

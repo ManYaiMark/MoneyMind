@@ -2,53 +2,83 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-8">
+    <div class="col-md-9 col-lg-9">
         
-        <div class="card shadow-sm" id="inputSection" {% if preview_data %}style="display:none;"{% endif %}>
+        <div class="card shadow-lg border-0 rounded-4 mb-4" id="inputSection" {% if preview_data %}style="display:none;"{% endif %}>
             <div class="card-body p-5 text-center">
                 <div class="mb-4">
-                    <span style="font-size: 3rem;">📂</span>
+                    <span style="font-size: 3.5rem;">📂</span>
                     <h3 class="fw-bold text-primary mt-2">นำเข้าไฟล์ข้อมูล</h3>
-                    <p class="text-muted">รองรับไฟล์ Excel (.xlsx), CSV และ Text</p>
+                    <p class="text-muted">เลือกไฟล์จากธนาคารหรือไฟล์ที่คุณเตรียมไว้เพื่อเริ่มประมวลผล</p>
                 </div>
 
-                <div class="alert alert-info text-start small mb-4">
-                    <b class="fs-5 mb-1">💡 คำแนะนำการเตรียมไฟล์:</b><br>
-                    <ul class="mb-0 mt-1 pl-3">
-                        <li><b>วันที่:</b> เช่น 12/01/2025</li>
-                        <li><b>รายการ:</b> เช่น ค่าอาหาร</li>
-                        <li><b>จำนวนเงิน:</b> เช่น -50 หรือ 1000</li>
-                    </ul>
-                    <div style="height: 20px;"></div>
-                    <div class="d-flex flex-column gap-2">
-                            <span class="small fs-5 fw-bold text-secondary">📥 โหลดไฟล์ตัวอย่าง:</span>
-                            <div class="btn-group shadow-sm mx-4 ">
-                                <a href="{% url 'download_template' %}?format=xlsx" class="btn btn-sm btn-light border text-success fw-bold">Excel</a>
-                                <a href="{% url 'download_template' %}?format=csv" class="btn btn-sm btn-light border text-primary fw-bold">CSV</a>
-                                <a href="{% url 'download_template' %}?format=txt" class="btn btn-sm btn-light border text-dark fw-bold">Text</a>
-                            </div>
+                <div class="alert alert-info text-start border-0 shadow-sm rounded-4 mb-4 p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-info-circle-fill me-2"></i> คำแนะนำการเตรียมไฟล์</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0 small text-dark">
+                                <li class="mb-2">✅ <b>วันที่:</b> เช่น 12/01/2025</li>
+                                <li>✅ <b>รายการ:</b> เช่น ค่าอาหาร</li>
+                            </ul>
                         </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled mb-0 small text-dark">
+                                <li class="mb-2">✅ <b>จำนวนเงิน:</b> -50 (จ่าย) หรือ 1000 (รับ)</li>
+                                <li>✅ <b>หมวดหมู่:</b> (ระบุหรือไม่ก็ได้)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-top border-info border-opacity-50">
+                        <p class="small fw-bold text-info mb-2">
+                            <i class="bi bi-cloud-arrow-down-fill me-1"></i> ดาวน์โหลดเทมเพลตตัวอย่าง:
+                        </p>
+                        <div class="btn-group w-100 shadow-sm rounded-3 overflow-hidden border border-info border-opacity-25">
+                            <a href="{% url 'download_template' %}?format=xlsx" 
+                            class="btn btn-sm btn-light py-2 text-primary fw-bold border-end" 
+                            style="border-color: rgba(39, 119, 238, 0.2) !important;">
+                            <i class="bi bi-file-earmark-excel-fill me-1"></i> Excel
+                            </a>
+                            
+                            <a href="{% url 'download_template' %}?format=csv" 
+                            class="btn btn-sm btn-light py-2 text-primary fw-bold border-end" 
+                            style="border-color: rgba(39, 119, 238, 0.2) !important;">
+                            <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i> CSV
+                            </a>
+                            
+                            <a href="{% url 'download_template' %}?format=txt" 
+                            class="btn btn-sm btn-light py-2 text-primary fw-bold"
+                            style="border-color: rgba(39, 119, 238, 0.2) !important;">
+                            <i class="bi bi-file-earmark-text-fill me-1"></i> Text
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="mb-4 text-start">
+                        <label class="form-label fw-bold">เลือกไฟล์จากเครื่องของคุณ</label>
                         {{ form.file }}
                     </div>
-                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm">
-                        เริ่มตรวจสอบไฟล์
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm rounded-pill">
+                        เริ่มตรวจสอบไฟล์ <i class="bi bi-arrow-right-short"></i>
                     </button>
                 </form>
             </div>
         </div>
 
-        <div class="card shadow-sm" id="previewSection" {% if not preview_data %}style="display:none;"{% endif %}>
+        <div class="card shadow border-0 rounded-4" id="previewSection" {% if not preview_data %}style="display:none;"{% endif %}>
             <div class="card-body p-4">
-                <h4 class="fw-bold text-primary mb-3">🔎 ตรวจสอบข้อมูลจากไฟล์</h4>
-                <p class="text-muted small">ระบบอ่านไฟล์ได้ดังนี้ โปรดตรวจสอบก่อนยืนยัน</p>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold text-primary mb-1">🔎 ตรวจสอบข้อมูลจากไฟล์</h4>
+                        <p class="text-muted small mb-0">โปรดตรวจสอบไอคอนและหมวดหมู่ที่ระบบเดาให้ก่อนบันทึก</p>
+                    </div>
+                    <span class="badge bg-primary rounded-pill px-3">{{ preview_data|length }} รายการ</span>
+                </div>
 
-                <div class="table-responsive mb-3" style="max-height: 500px; overflow-y: auto;">
-                    <table class="table table-hover align-middle">
+                <div class="table-responsive mb-4 rounded-3 border" style="max-height: 500px;">
+                    <table class="table table-hover align-middle mb-0">
                         <thead class="table-light sticky-top">
                             <tr>
                                 <th>วันที่</th>
@@ -58,19 +88,20 @@
                                 <th class="text-center">จัดการ</th>
                             </tr>
                         </thead>
-                        <tbody id="previewTableBody">
-                            </tbody>
+                        <tbody id="previewTableBody"></tbody>
                     </table>
                 </div>
 
-                <div class="d-flex gap-2">
-                    <form method="post" id="confirmForm" class="w-50">
+                <div class="d-flex gap-3">
+                    <form method="post" id="confirmForm" class="flex-grow-1">
                         {% csrf_token %}
                         <input type="hidden" name="confirm_save" value="true">
                         <input type="hidden" name="final_data" id="finalDataInput">
-                        <button type="button" onclick="submitData()" class="btn btn-success w-100 fw-bold">ยืนยันนำเข้าข้อมูล</button>
+                        <button type="button" onclick="submitData()" class="btn btn-success w-100 py-3 fw-bold rounded-pill shadow-sm">
+                            <i class="bi bi-check-circle-fill me-2"></i>ยืนยันนำเข้าข้อมูลลงระบบ
+                        </button>
                     </form>
-                    <a href="" class="btn btn-light border w-50">ยกเลิก / เลือกไฟล์ใหม่</a>
+                    <a href="" class="btn btn-light border py-3 px-4 rounded-pill">ยกเลิก</a>
                 </div>
             </div>
         </div>
@@ -79,44 +110,53 @@
 
 <div class="modal fade" id="editRowModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0">
-            <div class="modal-header">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
                 <h5 class="modal-title fw-bold text-primary">✏️ แก้ไขรายการ</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <input type="hidden" id="editIndex">
                 <div class="mb-3">
                     <label class="small fw-bold text-secondary">วันที่</label>
-                    <input type="date" id="editDate" class="form-control">
+                    <input type="date" id="editDate" class="form-control bg-light border-0">
                 </div>
                 <div class="mb-3">
                     <label class="small fw-bold text-secondary">รายการ</label>
-                    <input type="text" id="editDesc" class="form-control">
+                    <input type="text" id="editDesc" class="form-control bg-light border-0">
                 </div>
                 <div class="mb-3">
                     <label class="small fw-bold text-secondary">จำนวนเงิน</label>
-                    <input type="number" id="editAmount" step="0.01" class="form-control">
+                    <input type="number" id="editAmount" step="0.01" class="form-control bg-light border-0">
                 </div>
                 <div class="mb-3">
                     <label class="small fw-bold text-secondary">หมวดหมู่</label>
-                    <select id="editCat" class="form-select">
-                        <option value="">- ไม่ระบุ -</option>
-                        <optgroup label="📥 รายรับ">
+                    <div class="dropdown">
+                        <button class="btn btn-white border w-100 text-start d-flex align-items-center justify-content-between" type="button" id="editCatBtn" data-bs-toggle="dropdown">
+                            <span id="selectedDisplay"><i class="bi bi-question-circle me-2"></i> - ไม่ระบุ -</span>
+                            <i class="bi bi-chevron-down small"></i>
+                        </button>
+                        <ul class="dropdown-menu w-100 shadow-lg border-0 rounded-4 p-2" style="max-height: 300px; overflow-y: auto;">
+                            <li><a class="dropdown-item rounded-3 mb-1" href="javascript:void(0)" onclick="selectCategory('', 'secondary', 'bi-question-circle', '- ไม่ระบุ -')"><i class="bi bi-question-circle me-2"></i> - ไม่ระบุ -</a></li>
+                            <li><h6 class="dropdown-header fw-bold text-success mt-2">รายรับ</h6></li>
                             {% for cat in income_cats %}
-                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            <li><a class="dropdown-item rounded-3 mb-1" href="javascript:void(0)" onclick="selectCategory('{{ cat.id }}', '{{ cat.color }}', '{{ cat.icon }}', '{{ cat.name }}')">
+                                <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start"><i class="bi {{ cat.icon }} me-1"></i> {{ cat.name }}</span>
+                            </a></li>
                             {% endfor %}
-                        </optgroup>
-                        <optgroup label="📤 รายจ่าย">
+                            <li><h6 class="dropdown-header fw-bold text-danger mt-2">รายจ่าย</h6></li>
                             {% for cat in expense_cats %}
-                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            <li><a class="dropdown-item rounded-3 mb-1" href="javascript:void(0)" onclick="selectCategory('{{ cat.id }}', '{{ cat.color }}', '{{ cat.icon }}', '{{ cat.name }}')">
+                                <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start"><i class="bi {{ cat.icon }} me-1"></i> {{ cat.name }}</span>
+                            </a></li>
                             {% endfor %}
-                        </optgroup>
-                    </select>
+                        </ul>
+                    </div>
+                    <input type="hidden" id="editCatId"><input type="hidden" id="editCatColor"><input type="hidden" id="editCatIcon"><input type="hidden" id="editCatName">
                 </div>
             </div>
-            <div class="modal-footer border-top-0">
-                <button type="button" class="btn btn-primary w-100 rounded-pill" onclick="saveEdit()">บันทึกการแก้ไข</button>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-primary w-100 rounded-pill py-2 fw-bold" onclick="saveEdit()">บันทึกการแก้ไข</button>
             </div>
         </div>
     </div>
@@ -126,15 +166,15 @@
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow-lg">
             <div class="modal-body text-center p-4">
-                <div class="mb-3">
+                <div class="mb-3 text-danger">
                     <span style="font-size: 3rem;">🗑️</span>
                 </div>
                 <h5 class="fw-bold mb-2">ลบรายการนี้?</h5>
                 <p class="text-muted small mb-4">รายการจะถูกลบออกจากตารางตรวจสอบ</p>
                 
                 <div class="d-flex gap-2 justify-content-center">
-                    <button type="button" class="btn btn-danger rounded-pill px-3 fw-bold" onclick="confirmDelete()">ลบรายการ</button>
-                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-bold" onclick="confirmDelete()">ลบ</button>
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
                 </div>
             </div>
         </div>
@@ -145,122 +185,130 @@
     {{ preview_data|json_script:"preview-data-source" }}
 {% endif %}
 
-
 <script>
     let tableData = [];
-    let editModal = null;
-    let deleteModal = null; // 1. ตัวแปรเก็บ Modal ลบ
-    let indexToDelete = null; // 2. ตัวแปรจำว่ากำลังจะลบแถวไหน
+    let editModal = null, deleteModal = null, indexToDelete = null;
 
     document.addEventListener("DOMContentLoaded", function() {
-        // โหลดข้อมูล Preview
         const dataScript = document.getElementById('preview-data-source');
-        if (dataScript) {
-            try {
-                tableData = JSON.parse(dataScript.textContent);
-                renderTable();
-            } catch (e) {
-                console.error("Error parsing JSON:", e);
-            }
-        }
-
-        // เตรียม Modal แก้ไข
-        const editModalEl = document.getElementById('editRowModal');
-        if (editModalEl) {
-            editModal = new bootstrap.Modal(editModalEl);
-        }
-
-        // 3. เตรียม Modal ลบ
-        const deleteModalEl = document.getElementById('deletePreviewModal');
-        if (deleteModalEl) {
-            deleteModal = new bootstrap.Modal(deleteModalEl);
-        }
+        if (dataScript) { tableData = JSON.parse(dataScript.textContent); renderTable(); }
+        editModal = new bootstrap.Modal(document.getElementById('editRowModal'));
+        deleteModal = new bootstrap.Modal(document.getElementById('deletePreviewModal'));
     });
 
     function renderTable() {
         const tbody = document.getElementById('previewTableBody');
         if (!tbody) return;
-        
+
         tbody.innerHTML = '';
 
         tableData.forEach((row, index) => {
             let colorClass = row.amount < 0 ? 'text-danger' : 'text-success';
-            let catBadge = (row.category_name && row.category_name !== '-' && row.category_name !== 'None')
-                ? `<span class="badge bg-light text-dark border">${row.category_name}</span>` 
-                : `<span class="text-muted small">-</span>`;
+
+            let catBadge = '';
+
+            
+
+            if (row.cat_id) {
+                let borderStyle = row.is_uncertain ? 'border-warning border-2' : `border-${row.color}`;
+                
+                let alertIcon = row.is_uncertain ? '<i class="bi bi-exclamation-triangle-fill text-warning me-2" title="ระบบไม่แน่ใจ"></i>' : '';
+
+                catBadge = `<span class="badge bg-${row.color} bg-opacity-10 text-${row.color} border ${borderStyle} p-2 rounded-pill">
+                    ${row.is_uncertain ? '<i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>' : ''}
+                    ${alertIcon}
+                    <i class="bi ${row.icon} me-1"></i> ${row.category_name}
+                </span>`;
+            } else {
+                catBadge = `<span class="text-muted small">❓ ไม่ระบุ</span>`;
+            }
 
             let tr = document.createElement('tr');
+            if (row.is_uncertain) tr.classList.add('table-warning', 'bg-opacity-10');
             tr.innerHTML = `
                 <td class="small">${row.date}</td>
                 <td class="fw-bold">${row.description}</td>
                 <td class="${colorClass} fw-bold">${parseFloat(row.amount).toFixed(2)}</td>
                 <td>${catBadge}</td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle p-1" onclick="openEdit(${index})" style="width:30px;height:30px;">✏️</button>
-                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-1 ms-1" onclick="openDeleteModal(${index})" style="width:30px;height:30px;">🗑️</button>
+                    <button type="button" class="btn btn-sm btn-outline-warning rounded-circle p-1 shadow-sm" onclick="openEdit(${index})" style="width:32px;height:32px;">✏️</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-1 ms-1 shadow-sm" onclick="openDeleteModal(${index})" style="width:32px;height:32px;">🗑️</button>
                 </td>
             `;
             tbody.appendChild(tr);
         });
     }
 
-    // 5. ฟังก์ชันเปิด Modal ลบ
-    function openDeleteModal(index) {
-        if (!deleteModal) return;
-        indexToDelete = index; // จำไว้ว่าจะลบตัวที่เท่าไหร่
-        deleteModal.show();    // เปิด Modal
-    }
-
-    // 6. ฟังก์ชันยืนยันการลบ (กดปุ่มแดงใน Modal)
-    function confirmDelete() {
-        if (indexToDelete !== null) {
-            tableData.splice(indexToDelete, 1); // ลบข้อมูลใน Array
-            renderTable(); // วาดตารางใหม่
-            deleteModal.hide(); // ปิด Modal
-            indexToDelete = null; // เคลียร์ค่า
-        }
+    function selectCategory(id, color, icon, name) {
+        document.getElementById('editCatId').value = id;
+        document.getElementById('editCatColor').value = color;
+        document.getElementById('editCatIcon').value = icon;
+        document.getElementById('editCatName').value = name;
+        document.getElementById('selectedDisplay').innerHTML = id ? 
+            `<span class="badge bg-${color} bg-opacity-10 text-${color} border border-${color} p-2 rounded-pill"><i class="bi ${icon} me-1"></i> ${name}</span>` : 
+            `<i class="bi bi-question-circle me-2"></i> - ไม่ระบุ -`;
     }
 
     function openEdit(index) {
-        if (!editModal) return;
-
         const row = tableData[index];
         document.getElementById('editIndex').value = index;
         document.getElementById('editDate').value = row.date;
         document.getElementById('editDesc').value = row.description;
         document.getElementById('editAmount').value = row.amount;
-        
-        const catSelect = document.getElementById('editCat');
-        catSelect.value = row.category_id || "";
-
+        selectCategory(row.cat_id || '', row.color || 'secondary', row.icon || 'bi-question-circle', row.category_name && row.category_name !== '-' ? row.category_name : '- ไม่ระบุ -');
         editModal.show();
     }
 
     function saveEdit() {
         const index = document.getElementById('editIndex').value;
-        const catSelect = document.getElementById('editCat');
         
-        tableData[index] = {
-            date: document.getElementById('editDate').value,
-            description: document.getElementById('editDesc').value,
-            amount: parseFloat(document.getElementById('editAmount').value),
-            category_id: catSelect.value,
-            category_name: catSelect.options[catSelect.selectedIndex].text
-        };
+        // 1. ดึงค่าใหม่จาก Modal
+        const newDate = document.getElementById('editDate').value;
+        const newDesc = document.getElementById('editDesc').value;
+        const newAmount = parseFloat(document.getElementById('editAmount').value);
         
-        if (tableData[index].category_id === "") {
-            tableData[index].category_name = "-";
-        }
+        const newId = document.getElementById('editCatId').value;
+        const newName = document.getElementById('editCatName').value;
+        const newIcon = document.getElementById('editCatIcon').value;
+        const newColor = document.getElementById('editCatColor').value;
 
-        renderTable();
+        // 🔍 2. เก็บชื่อรายการ "ก่อนแก้" หรือ "ชื่อใหม่" เพื่อเอาไปหาเพื่อนที่ชื่อเหมือนกัน
+        // ในที่นี้เราใช้ชื่อที่ถูกแก้ไข (newDesc) เป็นเกณฑ์
+        const targetDescription = newDesc;
+
+        // 🚀 3. วนลูปเช็คข้อมูลทั้งตาราง (Bulk Update Logic)
+        tableData.forEach((row, i) => {
+            // แถวที่กำลังกดแก้ไขโดยตรง (Update ทุกอย่าง)
+            if (i == index) {
+                tableData[i] = {
+                    date: newDate,
+                    description: newDesc,
+                    amount: newAmount,
+                    cat_id: newId,
+                    category_name: newId ? newName : "-",
+                    icon: newIcon,
+                    color: newColor,
+                    is_uncertain: false
+                };
+            } 
+            // แถวอื่นๆ ที่มีชื่อรายการเหมือนกัน (Update เฉพาะหมวดหมู่)
+            else if (tableData[i].description === targetDescription) {
+                tableData[i].cat_id = newId;
+                tableData[i].category_name = newId ? newName : "-";
+                tableData[i].icon = newIcon;
+                tableData[i].color = newColor;
+                tableData[i].is_uncertain = false;
+            }
+        });
+
+        renderTable(); 
         editModal.hide();
     }
 
+    function openDeleteModal(index) { indexToDelete = index; deleteModal.show(); }
+    function confirmDelete() { tableData.splice(indexToDelete, 1); renderTable(); deleteModal.hide(); }
     function submitData() {
-        if (tableData.length === 0) {
-            alert("ไม่มีข้อมูลที่จะบันทึก");
-            return;
-        }
+        if (!tableData.length) return alert("ไม่มีข้อมูล");
         document.getElementById('finalDataInput').value = JSON.stringify(tableData);
         document.getElementById('confirmForm').submit();
     }

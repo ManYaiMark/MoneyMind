@@ -1,0 +1,96 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th width="20%">ชื่อหมวดหมู่</th>
+                <th width="40%" class="">AI Keywords (ตัวอย่าง)</th>
+                <th width="20%" class="text-center">ความนิยม</th>
+                <th width="15%" class="text-end">จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td>
+                    <span class="badge bg-{{ cat.color|default:type_color }} bg-opacity-10 text-{{ cat.color|default:type_color }} border border-{{ cat.color|default:type_color }} p-2 rounded-pill fs-6">
+                        <i class="bi {{ cat.icon|default:'bi-tags-fill' }} me-1"></i> {{ cat.name }}
+                    </span>
+                </td>
+                <td class="">
+                    {% if cat.keyword_list %}
+                        {% for word in cat.keyword_list|slice:":3" %}
+                            <span class="badge bg-light text-dark border me-1">{{ word }}</span>
+                        {% endfor %}
+                        {% if cat.keyword_list|length > 3 %}
+                            <small class="text-muted">+{{ cat.keyword_list|length|add:"-3" }}</small>
+                        {% endif %}
+                    {% else %}
+                        <small class="text-muted text-opacity-50">-</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div class="progress flex-grow-1" style="height: 6px; border-radius: 3px; max-width: 100px;">
+                            <div class="progress-bar bg-{{ cat.color|default:type_color }}" 
+                                role="progressbar" 
+                                style="width: {{ cat.usage_percent }}%" 
+                                aria-valuenow="{{ cat.usage_percent }}" 
+                                aria-valuemin="0" 
+                                aria-valuemax="100">
+                            </div>
+                        </div>
+                        <div class="ms-2 text-start" style="min-width: 60px;">
+                            <span class="d-block fw-bold text-dark" style="font-size: 0.8rem;">
+                                {{ cat.usage_percent }}%
+                            </span>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-warning me-1" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#categoryModal"
+                        onclick="openEditModal('{{ cat.id }}', '{{ cat.name }}', '{{ cat.type }}', '{{ cat.keyword_list_str|default:'' }}', '{{ cat.icon }}', '{{ cat.color }}')">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    
+                    {% if cat.name == 'อื่นๆ' %}
+                        <button class="btn btn-sm btn-outline-secondary" disabled title="หมวดหมู่ระบบ ห้ามลบ">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    {% else %}
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ cat.id }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    {% endif %}
+
+                    <div class="modal fade" id="deleteModal{{ cat.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">ยืนยันการลบ</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-start">
+                                    <p>คุณต้องการลบหมวดหมู่ <strong>"{{ cat.name }}"</strong> ใช่หรือไม่?</p>
+                                    <div class="alert alert-warning small mb-0">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> การกระทำนี้ไม่สามารถเรียกคืนได้
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                                    <a href="{% url 'delete_category' cat.id %}" class="btn btn-danger">ยืนยันลบ</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-4 text-muted">ไม่พบข้อมูลหมวดหมู่</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -2,11 +2,20 @@ import os
 
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.conf import settings
+
 from django.db import models
 from django.db.models.signals import post_save ,pre_save, post_delete
 from django.dispatch import receiver
 
 from allauth.socialaccount.models import SocialAccount
+
+class SocialLinkConfirmation(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='social_confirmation')
+    confirmed_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} confirmed at {self.confirmed_at}"
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -20,6 +29,7 @@ class Profile(models.Model):
     def is_google_login(self):
         return SocialAccount.objects.filter(user=self.user, provider='google').exists()
     
+
 @receiver(post_save, sender=User)
 def create_profile(sender, instance, created, **kwargs):
     if created:
@@ -80,11 +90,24 @@ class Category(models.Model):
     is_global = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
+    icon = models.CharField(max_length=50, default='bi-tags-fill', verbose_name='ไอคอน')
+    color = models.CharField(max_length=20, default='secondary', verbose_name='สี')
+
     class Meta:
         verbose_name_plural = "Categories"
 
     def __str__(self):
         return f"{self.name} ({self.get_type_display()})"
+    
+
+class UserCategoryPreference(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    is_hidden = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'category')
+        
 
 class Budget(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)

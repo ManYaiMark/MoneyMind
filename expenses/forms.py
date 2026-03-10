@@ -4,6 +4,11 @@ from datetime import datetime
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 
+class AdminUserForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'is_active', 'is_staff', 'is_superuser']
+
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField(label='อีเมล', widget=forms.TextInput(attrs={'class': 'form-control'}))
     first_name = forms.CharField(label='ชื่อจริง', required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -31,6 +36,16 @@ class ProfileImageForm(forms.ModelForm):
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
             'avatar_color': forms.HiddenInput()
         }
+
+# class ProfileForm(forms.ModelForm):
+#     class Meta:
+#         model = Profile
+#         fields = ['profile_picture', 'password', 'info' ]
+#         widgets = {
+#             'profile_picture': forms.FileInput(),
+#             'displayname' : forms.TextInput(attrs={'placeholder': 'Add display name'}),
+#             'info' : forms.Textarea(attrs={'rows':3, 'placeholder': 'Add information'})
+#         }
 
 class SmartInputForm(forms.Form):
     raw_data = forms.CharField(
@@ -69,15 +84,20 @@ class UploadFileForm(forms.Form):
 
 class CategoryForm(forms.ModelForm):
     class Meta:
+        print("Initializing CategoryForm Meta")
         model = Category
-        fields = ['name', 'type']
+        fields = ['name', 'type','icon','color']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ชื่อหมวดหมู่'}),
             'type': forms.Select(attrs={'class': 'form-select'}),
+            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ไอคอน'}),
+            'color': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'สี (เช่น #FF0000)'}),
         }
         labels = {
             'name': 'ชื่อหมวดหมู่',
-            'type': 'ประเภท'
+            'type': 'ประเภท',
+            'icon': 'ไอคอน',
+            'color': 'สี'
         }
 
 class BudgetForm(forms.ModelForm):

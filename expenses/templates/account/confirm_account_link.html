@@ -1,0 +1,48 @@
+{% extends 'expenses/base.html' %}
+
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="card border-0 shadow-sm p-4" style="width: 100%; max-width: 450px; border-radius: 20px;">
+        <div class="card-body text-center">
+            
+            <div class="mb-3">
+                <!-- <img src="/static/images/brain_logo.png" alt="MoneyMind Logo" style="width: 80px;"> -->
+            </div>
+            <h2 class="fw-bold" style="color: #0d6efd;">MoneyMind</h2>
+            <p class="text-muted mb-4">จัดการการเงินของคุณให้เป็นเรื่องง่าย</p>
+
+            <hr class="my-4" style="opacity: 0.1;">
+
+            <div class="mb-4">
+                <div class="alert alert-warning border-0 rounded-4 py-3" style="background-color: #fff9db; color: #856404;">
+                    <i class="bi bi-person-check-fill fs-3 d-block mb-2"></i>
+                    <h5 class="fw-bold">พบอีเมลเดิมในระบบ</h5>
+                    <p class="mb-0" style="font-size: 0.95rem;">
+                        อีเมล <strong>{{ email }}</strong> <br>
+                        มีการลงทะเบียนไว้แล้วด้วยรหัสผ่านปกติ
+                    </p>
+                </div>
+            </div>
+
+            <p class="mb-4 text-secondary">
+                คุณต้องการเชื่อมต่อบัญชี Google <br> เข้ากับบัญชีเดิมของคุณหรือไม่?
+            </p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="d-grid gap-3">
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold" 
+                            style="background-color: #7065f0; border: none; padding: 12px;">
+                        ยืนยันการเชื่อมบัญชี
+                    </button>
+                    
+                    <a href="{% url 'account_login' %}" class="text-decoration-none fw-bold" style="color: #0d6efd;">
+                        ยกเลิกและกลับไป
+                    </a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

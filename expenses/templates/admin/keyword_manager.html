@@ -1,0 +1,283 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h2 class="fw-bold text-dark mb-0">📂 Global Data & AI Manager</h2>
+        <p class="text-muted small mb-0">จัดการหมวดหมู่มาตรฐานและสอน AI ให้ฉลาดขึ้น</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <button type="button" class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick="resetModal()">
+            <i class="bi bi-plus-lg me-2"></i> เพิ่มหมวดหมู่ระบบ
+        </button>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card bg-white p-3 h-100 border-start border-4 border-primary">
+            <div class="d-flex align-items-center">
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-circle me-3">
+                    <i class="bi bi-layers-fill fs-4"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">หมวดหมู่ทั้งหมด</h6>
+                    <h3 class="fw-bold mb-0">{{ categories.count }} <small class="text-muted fs-6">Categories</small></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-white p-3 h-100 border-start border-4 border-warning">
+            <div class="d-flex align-items-center">
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-circle me-3">
+                    <i class="bi bi-robot fs-4"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted mb-1">AI Keywords</h6>
+                    <h3 class="fw-bold mb-0">{{ total_keywords_count|default:"-" }} <small class="text-muted fs-6">Words</small></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <ul class="nav nav-tabs nav-fill bg-light rounded-top" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active fw-bold text-danger py-3" data-bs-toggle="tab" href="#expense">
+                    <i class="bi bi-arrow-down-circle me-2"></i> รายจ่าย (Expense)
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link fw-bold text-success py-3" data-bs-toggle="tab" href="#income">
+                    <i class="bi bi-arrow-up-circle me-2"></i> รายรับ (Income)
+                </a>
+            </li>
+        </ul>
+
+        <div class="tab-content p-4">
+            <div class="tab-pane fade show active" id="expense">
+                {% include "admin/category_table.html" with categories=expense_cats type_color="danger" %}
+            </div>
+            <div class="tab-pane fade" id="income">
+                {% include "admin/category_table.html" with categories=income_cats type_color="success" %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="modalTitle">📂 จัดการหมวดหมู่และ AI Keywords</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <form id="globalCategoryForm" method="POST" action="{% url 'add_keyword' %}"> 
+                {% csrf_token %}
+                <input type="hidden" name="cat_id" id="categoryId">
+                
+                <div class="modal-body p-4">
+                    <h6 class="fw-bold text-muted mb-3 border-bottom pb-2">1. ข้อมูลทั่วไป & หน้าตา</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">ชื่อหมวดหมู่</label>
+                            <input type="text" name="name" id="catName" class="form-control" placeholder="เช่น อาหาร, เดินทาง" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">ประเภท</label>
+                            <select name="type" id="catType" class="form-select">
+                                <option value="EXPENSE">รายจ่าย</option>
+                                <option value="INCOME">รายรับ</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold d-block">เลือกสีป้าย (Color)</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="color" id="colorPrimary" value="primary" checked>
+                            <label class="btn btn-outline-primary" for="colorPrimary">น้ำเงิน</label>
+
+                            <input type="radio" class="btn-check" name="color" id="colorSuccess" value="success">
+                            <label class="btn btn-outline-success" for="colorSuccess">เขียว</label>
+
+                            <input type="radio" class="btn-check" name="color" id="colorDanger" value="danger">
+                            <label class="btn btn-outline-danger" for="colorDanger">แดง</label>
+
+                            <input type="radio" class="btn-check" name="color" id="colorWarning" value="warning">
+                            <label class="btn btn-outline-warning" for="colorWarning">เหลือง</label>
+
+                            <input type="radio" class="btn-check" name="color" id="colorInfo" value="info">
+                            <label class="btn btn-outline-info" for="colorInfo">ฟ้า</label>
+                            
+                            <input type="radio" class="btn-check" name="color" id="colorSecondary" value="secondary">
+                            <label class="btn btn-outline-secondary" for="colorSecondary">เทา</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">เลือกไอคอน (Icon)</label>
+                        <div class="border rounded p-2 bg-light" style="max-height: 150px; overflow-y: auto;">
+                            <div class="d-flex flex-wrap gap-2" id="iconContainer">
+                                </div>
+                        </div>
+                        <input type="hidden" name="icon" id="selectedIcon" value="bi-tags-fill">
+                    </div>
+
+                    <h6 class="fw-bold text-muted mb-3 border-bottom pb-2 pt-3">
+                        <i class="bi bi-robot me-1"></i> 2. AI Training Data
+                    </h6>
+                    <div class="mb-3">
+                        <label class="form-label">เพิ่มคำค้นหา (Keywords)</label>
+                        <div class="input-group mb-2">
+                            <input type="text" id="keywordInput" class="form-control" placeholder="พิมพ์แล้วกด Enter (เช่น 7-11, Grab)">
+                            <button class="btn btn-secondary" type="button" id="addKeywordBtn">
+                                <i class="bi bi-plus-lg me-1"></i> เพิ่ม
+                            </button>
+                        </div>
+                        <div id="keywordChipsContainer" class="d-flex flex-wrap gap-2 p-3 bg-light rounded border" style="min-height: 80px;">
+                            <span class="text-muted small fst-italic w-100 text-center mt-3 empty-msg">ยังไม่มีคำศัพท์</span>
+                        </div>
+                        <input type="hidden" name="keywords_list" id="hiddenKeywordString">
+                    </div>
+                </div>
+                
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                    <button type="submit" class="btn btn-primary px-4">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- ICON LIST (50 Icons) ---
+    const iconList = [
+        "bi-basket2-fill", "bi-bag-heart-fill", "bi-cart-fill", "bi-shop", // Shopping
+        "bi-cup-hot-fill", "bi-egg-fried", "bi-cake2-fill", "bi-cup-straw", // Food
+        "bi-bus-front-fill", "bi-car-front-fill", "bi-fuel-pump-fill", "bi-airplane-fill", // Transport
+        "bi-house-door-fill", "bi-lightning-charge-fill", "bi-droplet-fill", "bi-wifi", // Bills
+        "bi-cash-coin", "bi-wallet2", "bi-credit-card-fill", "bi-bank2", // Finance
+        "bi-heart-pulse-fill", "bi-bandaid-fill", "bi-hospital-fill", "bi-prescription2", // Health
+        "bi-controller", "bi-film", "bi-music-note-beamed", "bi-ticket-perforated-fill", // Ent
+        "bi-book-fill", "bi-briefcase-fill", "bi-mortarboard-fill", "bi-laptop", // Work/Edu
+        "bi-phone-fill", "bi-gift-fill", "bi-hammer", "bi-flower1", // Misc
+        "bi-tags-fill", "bi-star-fill", "bi-question-circle-fill", "bi-geo-alt-fill" // General
+    ];
+
+    // --- RENDER ICONS ---
+    const iconContainer = document.getElementById('iconContainer');
+    const selectedIconInput = document.getElementById('selectedIcon');
+
+    iconList.forEach(iconClass => {
+        // สร้าง Radio Button แบบซ่อน
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.className = 'btn-check';
+        radio.name = 'icon_select'; // ชื่อชั่วคราว ไม่ส่งไปหลังบ้านตรงๆ
+        radio.id = 'radio_' + iconClass;
+        radio.value = iconClass;
+        
+        // เมื่อเลือกไอคอน ให้ update hidden input
+        radio.addEventListener('change', () => {
+            selectedIconInput.value = iconClass;
+        });
+
+        // สร้าง Label ที่เป็นปุ่มกด
+        const label = document.createElement('label');
+        label.className = 'btn btn-outline-secondary border-0';
+        label.htmlFor = 'radio_' + iconClass;
+        label.innerHTML = `<i class="bi ${iconClass} fs-4"></i>`;
+
+        iconContainer.appendChild(radio);
+        iconContainer.appendChild(label);
+    });
+
+    // --- KEYWORDS LOGIC ---
+    const keywordInput = document.getElementById('keywordInput');
+    const addKeywordBtn = document.getElementById('addKeywordBtn');
+    const chipsContainer = document.getElementById('keywordChipsContainer');
+    const hiddenInput = document.getElementById('hiddenKeywordString');
+    let keywords = []; 
+
+    function addKeyword(word) {
+        word = word.trim();
+        if (word && !keywords.includes(word)) {
+            keywords.push(word);
+            renderChips();
+            keywordInput.value = ''; 
+        }
+    }
+
+    window.removeKeyword = function(word) {
+        keywords = keywords.filter(w => w !== word);
+        renderChips();
+    }
+
+    function renderChips() {
+        chipsContainer.innerHTML = '';
+        if (keywords.length === 0) {
+            chipsContainer.innerHTML = '<span class="text-muted small fst-italic w-100 text-center mt-3 empty-msg">ยังไม่มีคำศัพท์</span>';
+        } else {
+            keywords.forEach(word => {
+                const chip = document.createElement('span');
+                chip.className = 'badge bg-secondary bg-opacity-75 text-white rounded-pill d-flex align-items-center ps-3 pe-1 py-2 m-1';
+                chip.innerHTML = `${word} <button type="button" class="btn-close btn-close-white ms-2" style="width: 0.5em; height: 0.5em;" onclick="removeKeyword('${word}')"></button>`;
+                chipsContainer.appendChild(chip);
+            });
+        }
+        hiddenInput.value = keywords.join(',');
+    }
+
+    addKeywordBtn.addEventListener('click', () => addKeyword(keywordInput.value));
+    keywordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addKeyword(keywordInput.value);
+        }
+    });
+
+    
+    // --- MODAL CONTROLS ---
+    window.openEditModal = function(id, name, type, keywordString, icon, color) {
+        document.getElementById('modalTitle').innerText = '✏️ แก้ไขหมวดหมู่: ' + name;
+        document.getElementById('categoryId').value = id;
+        document.getElementById('catName').value = name;
+        document.getElementById('catType').value = type;
+
+        // Set Keywords
+        keywords = keywordString ? keywordString.split(',') : [];
+        renderChips();
+
+        // Set Color
+        if(color) {
+            document.querySelector(`input[name="color"][value="${color}"]`).checked = true;
+        }
+
+        // Set Icon
+        const iconToSelect = icon || 'bi-tags-fill';
+        selectedIconInput.value = iconToSelect;
+        const iconRadio = document.getElementById('radio_' + iconToSelect);
+        if (iconRadio) iconRadio.checked = true;
+    }
+    
+    window.resetModal = function() {
+        document.getElementById('modalTitle').innerText = '➕ เพิ่มหมวดหมู่ใหม่';
+        document.getElementById('globalCategoryForm').reset();
+        document.getElementById('categoryId').value = '';
+        keywords = [];
+        renderChips();
+        // Reset to defaults
+        document.getElementById('radio_bi-tags-fill').checked = true;
+        document.getElementById('colorSecondary').checked = true;
+        selectedIconInput.value = 'bi-tags-fill';
+    }
+</script>
+{% endblock %}

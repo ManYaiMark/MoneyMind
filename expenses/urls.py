@@ -5,14 +5,25 @@ from expenses import views
 urlpatterns = [
     path('', views.dashboard, name='dashboard'), # ตั้งเป็นหน้าแรก (Home)
     path('profile/', views.profile, name='profile'),
+    path('profile/change-password/', views.change_password_modal, name='change_password_modal'),
+    path('profile/set-password-modal/', views.set_password_modal, name='set_password_modal'),
     path('profile/delete/', views.delete_account, name='delete_account'),
+    # path('onboarding/', views.profile_edit_view, name="profile-onboarding"),
 
     path('add/', views.add_smart_transaction, name='add_smart_transaction'),
     path('import/', views.import_data, name='import_data'),
     path('import/template/', views.download_template, name='download_template'),
 
-    path('keyword_manager/', views.keyword_manager, name='keyword_manager'),
-    path('keyword_manager/add/', views.add_keyword, name='add_keyword'),
+
+    # admin management
+    path('management/keyword_manager/', views.keyword_manager, name='keyword_manager'),
+    path('management/keyword_manager/add/', views.add_keyword, name='add_keyword'),
+
+    path('management/users/', views.admin_user_list, name='admin_user_list'),
+    path('management/users/toggle/<int:user_id>/', views.toggle_user_status, name='toggle_user_status'),
+    path('management/users/<int:user_id>/edit/', views.admin_user_edit, name='admin_user_edit'),
+    path('management/users/<int:user_id>/delete/', views.admin_user_delete, name='admin_user_delete'),
+
     # ไม่ไดเใช้แล้ว
     path('ai-manager/', views.ai_manager, name='ai_manager'),
     path('ai-manager/template/', views.download_ai_template, name='download_ai_template'),
@@ -23,11 +34,16 @@ urlpatterns = [
     path('transactions/delete-multiple/', views.delete_multiple_transactions, name='delete_multiple_transactions'),
 
     path('categories/', views.manage_categories, name='manage_categories'),
-    path('categories/edit/<int:category_id>/', views.edit_category, name='edit_category'),
-    path('categories/delete/<int:category_id>/', views.delete_category, name='delete_category'),
+    path('categories/edit/<int:cat_id>/', views.edit_category, name='edit_category'),
+    path('categories/delete/<int:cat_id>/', views.delete_category, name='delete_category'),
 
     path('budget/', views.manage_budget, name='manage_budget'),
     path('budget/edit/<int:budget_id>/', views.edit_budget, name='edit_budget'),
     path('budget/delete/<int:budget_id>/', views.delete_budget, name='delete_budget'),
+
+    # path('admin/users/', views.admin_user_list, name='admin_user_list'),
+    # about login
+    path('confirm-link/', views.confirm_account_link, name='confirm_account_link'),
+    
 
 ]

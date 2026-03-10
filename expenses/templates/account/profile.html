@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+<!-- <div id="passwordError" class="alert alert-danger d-none" role="alert"></div> -->
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-7">
@@ -11,14 +12,16 @@
                     
                     <div class="position-relative d-inline-block mb-3">
                         <div style="width: 120px; height: 120px;">
-                            {% if user.profile.profile_picture %}
-                                <img src="{{ user.profile.profile_picture.url }}" class="rounded-circle w-100 h-100 object-fit-cover shadow border">
-                            {% else %}
-                                <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center shadow border text-white {{ user.profile.avatar_color|default:user.profile.avatar_color }}" 
-                                    style="font-size: 48px; font-weight: bold;">
-                                    {{ user.first_name|default:user.username|slice:":1"|upper }}
-                                </div>
-                            {% endif %}
+                            <div style="width: 120px; height: 120px;">
+                                {% if request.user.profile.profile_picture %}
+                                    <img src="{{ request.user.profile.profile_picture.url }}" class="rounded-circle w-100 h-100 object-fit-cover shadow border">
+                                {% else %}
+                                    <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center shadow border text-white {{ request.user.profile.avatar_color|default:current_color }}" 
+                                        style="font-size: 48px; font-weight: bold;">
+                                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                         
                         <button class="btn btn-light btn-sm border position-absolute bottom-0 end-0 rounded-circle shadow-sm" 
@@ -36,10 +39,21 @@
                             <i class="bi bi-person-gear"></i> แก้ไขข้อมูลส่วนตัว
                         </button>
                         
-                        {% if not user.profile.is_google_login %}
+                        <!-- {% if not user.profile.is_google_login %}
                         <button class="btn btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#passwordModal">
                             <i class="bi bi-key-fill"></i> เปลี่ยนรหัสผ่าน
                         </button>
+                        {% endif %} -->
+                        {% if user.has_usable_password %}
+                            <!-- <a href="{% url 'account_change_password' %}">เปลี่ยนรหัสผ่าน</a> -->
+                            <button class="btn btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#passwordModal">
+                                <i class="bi bi-key-fill"></i> เปลี่ยนรหัสผ่าน
+                            </button>
+                        {% else %}
+                            <!-- <a href="{% url 'account_set_password' %}">ตั้งรหัสผ่านใหม่</a> -->
+                            <button class="btn btn-outline-danger rounded-pill" data-bs-toggle="modal" data-bs-target="#SetpasswordModal">
+                                <i class="bi bi-key-fill"></i> ตั้งรหัสผ่าน
+                            </button>
                         {% endif %}
                     </div>
                 </div>
@@ -128,12 +142,14 @@
     </div>
 </div>
 
-{% if not user.profile.is_google_login %}
-<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+<!-- {% if not user.profile.is_google_login %} -->
+<!-- <div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
+                
                 <h5 class="modal-title text-danger">เปลี่ยนรหัสผ่าน</h5>
+                
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST">
@@ -157,8 +173,71 @@
             </form>
         </div>
     </div>
+</div> -->
+<!-- {% endif %} -->
+
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">เปลี่ยนรหัสผ่าน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="changePasswordForm" method="POST" action="{% url 'change_password_modal' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div id="passwordError" class="alert alert-danger d-none" role="alert"></div>
+                    
+                    <div class="mb-3">
+                        <label>รหัสผ่านเดิม</label>
+                        <input type="password" class="form-control" name="old_password" required>
+                    </div>
+                    <div class="mb-3"> 
+                        <label class="form-label">รหัสผ่านใหม่</label>
+                        <input type="password" class="form-control" name="new_password1" placeholder="กรอกรหัสผ่านใหม่อย่างน้อย 8 ตัวอักษร" minlength="8" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ยืนยันรหัสผ่านใหม่</label>
+                        <input type="password" class="form-control" name="new_password2" placeholder="กรอกรหัสผ่านใหม่อย่างน้อย 8 ตัวอักษร" minlength="8" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">ยืนยันเปลี่ยนรหัส</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
-{% endif %}
+
+<div class="modal fade" id="SetpasswordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">ตั้งรหัสผ่าน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="setPasswordForm" method="POST" action="{% url 'set_password_modal' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div id="setPasswordError" class="alert alert-danger d-none" role="alert"></div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">รหัสผ่านใหม่</label>
+                        <input type="password" class="form-control" name="new_password1" placeholder="กรอกรหัสผ่านใหม่อย่างน้อย 8 ตัวอักษร" minlength="8" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">ยืนยันรหัสผ่านใหม่</label>
+                        <input type="password" class="form-control" name="new_password2" placeholder="กรอกรหัสผ่านใหม่อย่างน้อย 8 ตัวอักษร" minlength="8" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-100">บันทึกรหัสผ่าน</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script>
     const colorInput = document.getElementById('id_avatar_color');
@@ -167,40 +246,74 @@
     const uploadPreview = document.getElementById('uploadPreview');
     const colorOptions = document.querySelectorAll('.color-option');
 
-    // 1. ฟังก์ชันเลือกสี
-    function selectColor(colorClass) {
-        // อัปเดตค่าลง Hidden Input
-        colorInput.value = colorClass;
-        
-        // UI: ใส่ขอบให้รู้ว่าเลือกอันไหน
-        colorOptions.forEach(opt => opt.style.border = '2px solid transparent');
-        const selected = document.querySelector(`[data-color="${colorClass}"]`);
-        if(selected) selected.style.border = '2px solid #333'; // ขอบสีดำบอกว่าเลือกอยู่
+    function handleFormSubmit(formId, errorDivId) {
+        const form = document.getElementById(formId);
+        const errorDiv = document.getElementById(errorDivId);
 
-        // Clear ค่ารูปภาพ (ถ้าเคยเลือกไว้) เพื่อบอกหลังบ้านว่า "เอาสีนะ ไม่เอารูป"
-        fileInput.value = ""; 
-        previewContainer.style.display = 'none';
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                errorDiv.classList.add('d-none');
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.reload(); 
+                    } else {
+                        errorDiv.classList.remove('d-none');
+                        errorDiv.innerText = data.message;
+                    }
+                })
+                .catch(error => {
+                    errorDiv.classList.remove('d-none');
+                    errorDiv.innerText = "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่";
+                });
+            });
+        }
     }
 
-    // 2. ฟังก์ชันเมื่อเลือกไฟล์รูป
-    fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            // โชว์ Preview
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                uploadPreview.src = evt.target.result;
-                previewContainer.style.display = 'block';
-            }
-            reader.readAsDataURL(file);
-
-            // Clear ค่าสีทิ้ง (บอกหลังบ้านว่า "เอารูปนะ ไม่เอาสี")
-            colorInput.value = "";
-            colorOptions.forEach(opt => opt.style.border = '2px solid transparent'); // เอาขอบออก
-        }
+    document.addEventListener("DOMContentLoaded", function() {
+        handleFormSubmit('changePasswordForm', 'passwordError');
+        handleFormSubmit('setPasswordForm', 'setPasswordError');
     });
 
-    // (Optional) Init: ถ้ามีสีเดิมอยู่แล้ว ให้ Highlight สีนั้นไว้
+    function selectColor(colorClass) {
+        colorInput.value = colorClass;
+        
+        colorOptions.forEach(opt => opt.style.border = '2px solid transparent');
+        const selected = document.querySelector(`[data-color="${colorClass}"]`);
+        if(selected) selected.style.border = '2px solid #333';
+
+        fileInput.value = ""; 
+        if (previewContainer) {
+            previewContainer.style.display = 'none';
+        }
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    if (uploadPreview) uploadPreview.src = evt.target.result;
+                    if (previewContainer) previewContainer.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+
+                colorInput.value = "";
+                colorOptions.forEach(opt => opt.style.border = '2px solid transparent');
+            }
+        });
+    }
+
     const currentColor = "{{ user.profile.avatar_color }}";
     if (currentColor) {
         const activeOption = document.querySelector(`[data-color="${currentColor}"]`);

@@ -1,0 +1,261 @@
+{% extends 'admin/admin_base.html' %}
+
+{% block content %}
+<style>
+    .modal-content { border-radius: 15px; border: none; }
+    .modal-header { background-color: #e3f2fd; color: #0d6efd; border-bottom: 1px solid #dee2e6; border-radius: 15px 15px 0 0; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold"><i class="bi bi-people-fill me-2"></i>จัดการผู้ใช้งาน</h2>
+    <div class="d-flex gap-2">
+        <form class="d-flex" method="get" style="width: 300px;">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="ค้นหา..." value="{{ search_query|default:'' }}">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+            </div>
+        </form>
+        <button class="btn btn-success rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-person-plus-fill me-1"></i> เพิ่มผู้ใช้
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-secondary">
+                <tr>
+                    <th class="ps-4">ผู้ใช้งาน</th>
+                    <th>อีเมล</th>
+                    <th>เข้าร่วมเมื่อ</th>
+                    <th>สถานะ</th>
+                    <th class="text-center">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in page_obj %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center">
+                            <div style="width: 40px; height: 40px;" class="me-3">
+                                {% if u.profile.profile_picture %}
+                                    <img src="{{ u.profile.profile_picture.url }}" class="rounded-circle w-100 h-100 object-fit-cover shadow-sm border">
+                                {% else %}
+                                    <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center bg-primary text-white fw-bold">
+                                        {{ u.username|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="fw-bold d-block">{{ u.username }}</span>
+                                {% if u.is_superuser %}<span class="badge bg-warning text-dark small">ADMIN</span>{% endif %}
+                                {% if u.is_staff %}<span class="badge bg-info text-white small">STAFF</span>{% endif %}
+                                {% if u.has_usable_password %}<span class="badge text-white  fw-bold px-2 py-1" style="background-color: #db7909; border-radius: 6px;">LOCAL</span>{% endif %}
+                                {% if u.has_google %}<span class="badge text-white fw-bold px-2 py-1" style="background-color: #06ac01; border-radius: 6px;">GOOGLE</span>{% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td class="text-muted small">{{ u.date_joined|date:"d M Y" }}</td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge bg-success-subtle text-success px-3 rounded-pill">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger px-3 rounded-pill">Banned</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary rounded-circle me-1" 
+                                data-bs-toggle="modal" data-bs-target="#editUserModal"
+                                onclick="openEditUserModal(
+                                    '{{ u.id }}', 
+                                    '{{ u.username }}', 
+                                    '{{ u.email }}', 
+                                    {{ u.is_active|yesno:'true,false' }}, 
+                                    {{ u.is_staff|yesno:'true,false' }}, 
+                                    {{ u.has_usable_password|yesno:'true,false' }},
+                                    {{ u.has_google|yesno:'true,false' }},
+                                    {{ u.is_superuser|yesno:'true,false' }} )"> <i class="bi bi-pencil"></i>
+                        </button>
+                        {% if u != request.user %}
+                        <a href="{% url 'admin_user_delete' u.id %}" class="btn btn-sm btn-outline-danger rounded-circle" onclick="return confirm('ยืนยันการลบผู้ใช้? ข้อมูลทั้งหมดของเขาจะหายไป!')">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header py-3">
+                <h5 class="modal-title fw-bold">👤 เพิ่มผู้ใช้งานใหม่</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">ชื่อผู้ใช้ (Username)</label>
+                        <input type="text" name="username" class="form-control bg-light border-0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">อีเมล (Email)</label>
+                        <input type="email" name="email" class="form-control bg-light border-0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">รหัสผ่านเริ่มต้น</label>
+                        <input type="password" name="password" class="form-control bg-light border-0" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="submit" name="create_user" class="btn btn-primary w-100 rounded-pill py-2 fw-bold">สร้างบัญชีผู้ใช้</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header py-3">
+                <h5 class="modal-title fw-bold">✏️ แก้ไขผู้ใช้งาน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editUserForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">ชื่อผู้ใช้</label>
+                        <input type="text" name="username" id="edit_username" class="form-control bg-light border-0" required>
+                    </div>
+                    {% if u.is_staff %}
+                    <div></div>
+                    {% else %}
+                    {% endif %}
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">อีเมล</label>
+                        <input type="email" name="email" id="edit_email" class="form-control bg-light border-0" required>
+                    </div>
+                    <hr class="my-3 text-muted">
+
+                    <div id="password_section" style="display: none;">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="toggle_password" id="toggle_password" onchange="togglePasswordInput()">
+                            <label class="form-check-label small fw-bold text-danger">ตั้งค่ารหัสผ่านใหม่</label>
+                        </div>
+                        <div id="password_input_div" style="display: none;" class="mt-2">
+                            <input type="password" name="new_password" id="edit_new_password" class="form-control bg-light border-0" placeholder="กรอกรหัสผ่านใหม่อย่างน้อย 8 ตัวอักษร" minlength="8">
+                        </div>
+                    </div>
+                    <div id="google_user_warning" style="display: none;" class="mb-2">
+                        <div class="alert alert-warning py-2 mb-0 d-flex align-items-center" style="font-size: 0.85rem;">
+                            <i class="bi bi-google me-2"></i> บัญชี Google (ระบบล็อกการเปลี่ยนรหัสผ่าน)
+                        </div>
+                    </div>
+                    {% if u.has_google %}
+                    <div></div>
+                    {% else %}
+                    <div></div>
+                    {% endif %}
+                    
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_active" id="edit_is_active">
+                        <label class="form-check-label small fw-bold">อนุญาตให้ใช้งาน (Active)</label>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="is_staff" id="edit_is_staff">
+                        <label class="form-check-label small fw-bold">สถานะทีมงาน (Staff)</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold">บันทึกการแก้ไข</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function openEditUserModal(id, username, email, isActive, isStaff, hasPassword, hasGoogle, isSuperuser) {
+        const userField = document.getElementById('edit_username');
+        const emailField = document.getElementById('edit_email');
+        
+        userField.value = username;
+        emailField.value = email;
+        document.getElementById('edit_is_active').checked = isActive === true || isActive === 'True';
+        document.getElementById('edit_is_staff').checked = isStaff === true || isStaff === 'True';
+        
+        const form = document.getElementById('editUserForm');
+        form.action = `/management/users/${id}/edit/`; 
+
+        const pwdSection = document.getElementById('password_section');
+        const googleWarning = document.getElementById('google_user_warning');
+        const togglePwd = document.getElementById('toggle_password');
+        const pwdInputDiv = document.getElementById('password_input_div');
+        const pwdInput = document.getElementById('edit_new_password');
+
+        // รีเซ็ตค่ารหัสผ่านทุกครั้งที่เปิด Modal
+        togglePwd.checked = false;
+        pwdInputDiv.style.display = 'none';
+        pwdInput.value = '';
+        pwdInput.removeAttribute('required');
+
+        // ตรวจสอบว่ามีรหัสผ่านไหม (ซ่อน/แสดง ส่วนเปลี่ยนรหัส)
+        if (hasPassword === true || hasPassword === 'true') {
+            pwdSection.style.display = 'block';
+            googleWarning.style.display = 'none';
+        } else {
+            pwdSection.style.display = 'none';
+            googleWarning.style.display = 'block';
+        }
+
+
+        const isLinkedGoogle = (hasGoogle === true || hasGoogle === 'True');
+        const isAdmin = (isSuperuser === true || isSuperuser === 'True');
+
+        
+        if (isLinkedGoogle || isAdmin) {
+            userField.removeAttribute('readonly');
+            emailField.setAttribute('readonly', 'readonly');
+            // userField.classList.add('bg-secondary', 'bg-opacity-10'); 
+            emailField.classList.add('bg-secondary', 'bg-opacity-10');
+            
+            emailField.removeAttribute('required');
+        } else {
+            userField.removeAttribute('readonly');
+            emailField.removeAttribute('readonly');
+            // userField.classList.remove('bg-secondary', 'bg-opacity-10');
+            emailField.classList.remove('bg-secondary', 'bg-opacity-10');
+            
+            emailField.setAttribute('required', 'required');
+        }
+    }
+
+    function togglePasswordInput() {
+        const isChecked = document.getElementById('toggle_password').checked;
+        const pwdInputDiv = document.getElementById('password_input_div');
+        const pwdInput = document.getElementById('edit_new_password');
+        
+        pwdInputDiv.style.display = isChecked ? 'block' : 'none';
+        
+        if (isChecked) {
+            pwdInput.setAttribute('required', 'required'); 
+        } else {
+            pwdInput.removeAttribute('required');
+            pwdInput.value = '';
+        }
+    }
+    
+    // console.log('{{page_obj.1.keywords}}');
+</script>
+{% endblock %}

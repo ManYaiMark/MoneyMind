@@ -5,6 +5,7 @@ pandas
 openpyxl
 Pillow
 xlrd
+environ
 
 # oauth
 requests

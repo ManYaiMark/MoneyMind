@@ -2,219 +2,204 @@
 {% load humanize %}
 
 {% block content %}
-<div class="container-fluid py-4">
-
-    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm border">
-        <a href="{{ prev_month_url }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-            <i class="bi bi-chevron-double-left"></i> เดือนก่อน
-        </a>
-        
-        <div class="text-center">
-            <h4 class="fw-bold m-0 text-primary">📅 {{ current_month_name }} {{ current_year }}</h4>
-            <small class="text-muted">ดูภาพรวมรายเดือน</small>
-        </div>
-        
-        <a href="{{ next_month_url }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-            เดือนถัดไป <i class="bi bi-chevron-double-right"></i>
-        </a>
+<div class="container-fluid py-4" style="background-color: #f8fbff; min-height: 100vh;">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-4 shadow-sm border border-info border-opacity-25">
+        <a href="{{ prev_month_url }}" class="btn btn-outline-primary rounded-pill btn-sm px-3"><i class="bi bi-chevron-left"></i> เดือนก่อน</a>
+        <h4 class="fw-bold m-0 text-primary text-center">📊 แดชบอร์ด: {{ current_month_name }} {{ current_year }}</h4>
+        <a href="{{ next_month_url }}" class="btn btn-outline-primary rounded-pill btn-sm px-3">เดือนถัดไป <i class="bi bi-chevron-right"></i></a>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card bg-primary text-white shadow-sm h-100 border-0">
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card h-100 border-0 border-start border-4 border-primary shadow-sm rounded-4">
                 <div class="card-body">
-                    <h6 class="card-title opacity-75">💰 ยอดคงเหลือสุทธิ</h6>
-                    <h2 class="fw-bold">{{ balance|floatformat:2|intcomma }} บาท</h2>
+                    <p class="small fw-bold text-primary text-uppercase mb-1">ยอดเงินคงเหลือรวม</p>
+                    <h3 class="fw-bold mb-0 text-dark">{{ total_balance|floatformat:2|intcomma }} ฿</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-success text-success shadow-sm h-100">
+        <div class="col-md-3">
+            <div class="card h-100 border-0 border-start border-4 border-success shadow-sm rounded-4">
                 <div class="card-body">
-                    <h6 class="card-title">รายรับรวม</h6>
-                    <h3 class="fw-bold">+{{ total_income|floatformat:2|intcomma }}</h3>
+                    <p class="small fw-bold text-success text-uppercase mb-1">รายรับเดือนนี้</p>
+                    <h3 class="fw-bold mb-0 text-success">+{{ m_income|floatformat:2|intcomma }}</h3>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-danger text-danger shadow-sm h-100">
+        <div class="col-md-3">
+            <div class="card h-100 border-0 border-start border-4 border-danger shadow-sm rounded-4">
                 <div class="card-body">
-                    <h6 class="card-title">รายจ่ายรวม</h6>
-                    <h3 class="fw-bold">-{{ total_expense|floatformat:2|intcomma }}</h3>
+                    <p class="small fw-bold text-danger text-uppercase mb-1">รายจ่ายเดือนนี้</p>
+                    <h3 class="fw-bold mb-0 text-danger">-{{ m_expense|floatformat:2|intcomma }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card h-100 border-0 border-start border-4 border-info shadow-sm rounded-4">
+                <div class="card-body">
+                    <p class="small fw-bold text-info text-uppercase mb-1">งบที่เหลือประจำเดือน</p>
+                    <h3 class="fw-bold mb-0 {% if remaining_budget < 0 %}text-danger{% endif %}">{{ remaining_budget|floatformat:2|intcomma }}</h3>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card shadow-sm h-100 border-0">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-body">
-                    <h5 class="card-title fw-bold mb-3 text-primary">🔮 แนวโน้มรายเดือน ({{ current_month_name }})</h5>
-                    <div style="height: 350px;">
-                        <canvas id="forecastChart"></canvas>
-                    </div>
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">📈 กระแสเงินสดคงเหลือรายวัน</h6>
+                    <div style="height: 300px;"><canvas id="lineChart"></canvas></div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100 border-0">
-                <div class="card-header bg-white py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <a href="{{ prev_week_url }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                        <div class="text-center">
-                            <h6 class="m-0 fw-bold text-success">📅 พฤติกรรมรายสัปดาห์</h6>
-                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill" style="font-size: 0.75rem;">
-                                {{ week_range_str }}
-                            </span>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">🍕 สัดส่วนค่าใช้จ่าย</h6>
+                            <div style="height: 250px;"><canvas id="pieChart"></canvas></div>
                         </div>
-                        <a href="{{ next_week_url }}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div style="height: 300px;">
-                        <canvas id="weeklyChart"></canvas>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 h-100">
+                        <div class="card-body">
+                            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">📊 รายรับ vs รายจ่าย (6 เดือน)</h6>
+                            <div style="height: 250px;"><canvas id="barChart"></canvas></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
-            <h5 class="card-title fw-bold mb-3">รายการประจำเดือน {{ current_month_name }}</h5>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>วันที่</th>
-                            <th>รายการ</th>
-                            <th>หมวดหมู่</th>
-                            <th class="text-end">จำนวนเงิน</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for txn in transactions %}
-                        <tr>
-                            <td>{{ txn.date|date:"d M Y" }}</td>
-                            <td>{{ txn.description }}</td>
-                            <td>
-                                {% if txn.category %}
-                                    <span class="badge bg-secondary">{{ txn.category.name }}</span>
-                                {% else %}
-                                    <span class="badge bg-light text-dark border">ไม่ระบุ</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end fw-bold {% if txn.amount < 0 %}text-danger{% else %}text-success{% endif %}">
-                                {{ txn.amount|floatformat:2|intcomma }}
-                            </td>
-                        </tr>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">💡 ข้อมูลเชิงลึก</h6>
+                    <div class="p-3 rounded-3 mb-3 border border-warning border-opacity-50 bg-warning bg-opacity-10">
+                        <small class="text-muted d-block">ใช้เงินเยอะที่สุดในหมวด:</small>
+                        <span class="fw-bold fs-5 text-dark">{{ top_spending_cat }}</span>
+                    </div>
+
+                    {% if budget_alerts %}
+                    <label class="small fw-bold text-danger mb-2">🚨 แจ้งเตือนงบประมาณ:</label>
+                    {% for alert in budget_alerts %}
+                    <div class="alert alert-danger py-2 mb-2 small rounded-pill border-0 shadow-sm">
+                        {{ alert.name }} ใช้ไปแล้ว {{ alert.percent }}%
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <h6 class="small fw-bold mt-4 mb-2 text-secondary">รายการล่าสุดในเดือนนี้</h6>
+                    <div class="list-group list-group-flush small">
+                        {% for t in recent_transactions %}
+                        <div class="list-group-item px-0 d-flex align-items-center border-light bg-transparent">
+                            
+                            <div style="width: 65%;" class="pe-2">
+                                <span class="text-dark">
+                                    {{ t.description|truncatechars:18 }} </span>
+                                <span class="text-muted small">
+                                    ({{ t.category.name|default:"ไม่ระบุ"|truncatechars:12 }}) </span>
+                            </div>
+                            
+                            <div style="width: 35%;" class="text-end fw-bold {% if t.amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                                {{ t.amount|floatformat:2|intcomma }}
+                            </div>
+                            
+                        </div>
                         {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted py-4">ไม่มีรายการ</td></tr>
+                        <div class="text-center py-3 text-muted">ไม่มีรายการในเดือนนี้</div>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
             </div>
+
+            {% if critical_budget %}
+            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden border-start border-4 border-danger">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>งบประมาณที่ต้องระวัง!</h6>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-bold">{{ critical_budget.name }}</span>
+                            <span class="small">{{ critical_budget.percent }}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px; background: #f0f0f0;">
+                            <div class="progress-bar {% if critical_budget.percent >= 90 %}bg-danger{% else %}bg-warning{% endif %}" 
+                                style="width: {{ critical_budget.percent }}%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-light p-3 rounded-3 text-center">
+                        <small class="d-block text-muted">เงินที่เหลือในหมวดนี้</small>
+                        <h3 class="fw-bold mb-0 {% if critical_budget.remaining <= 0 %}text-danger{% else %}text-dark{% endif %}">
+                            {{ critical_budget.remaining|floatformat:2|intcomma }} ฿
+                        </h3>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card border-0 shadow-sm rounded-4 bg-primary text-white p-4 text-center">
+                <p class="small mb-2 opacity-75">เงินคงเหลือสุทธิเดือนนี้</p>
+                <h2 class="fw-bold mb-0">{{ net_cash_flow|floatformat:2|intcomma }} ฿</h2>
+            </div>
+            {% endif %}
+
+            
         </div>
     </div>
-    <div style="height: 40px;"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const chartColors = [
-        '#4e73df', // 1. น้ำเงิน (อาหาร/ทั่วไป)
-        '#1cc88a', // 2. เขียว (เดินทาง)
-        '#e74a3b', // 3. แดง (ช้อปปิ้ง)
-        '#f6c23e', '#36b9cc', '#6f42c1' // สีสำรอง
-    ];
-    
-    // 🎨 สีสำหรับ "ไม่ระบุ" (สีเทาเข้ม)
-    const unknownColor = '#858796'; 
-
-    // --- 1. กราฟเส้น (Line Chart) ---
-    const ctxForecast = document.getElementById('forecastChart').getContext('2d');
-    const lineDatasetsRaw = {{ line_datasets|safe }}; 
-    const forecastLabels = {{ forecast_labels|safe }};
-
-    const lineDatasets = lineDatasetsRaw.map((ds, index) => {
-        // หาว่าเป็นข้อมูลชุดที่เท่าไหร่
-        const pairIndex = Math.floor(index / 2);
-        
-        // 🛠️ Logic เลือกสี:
-        let color;
-        const labelName = ds.label || '';
-
-        // ถ้าชื่อมีคำว่า "ไม่ระบุ" ให้ใช้สีเทาทันที
-        if (labelName.includes('ไม่ระบุ')) {
-            color = unknownColor;
-        } else {
-            // ถ้าไม่ใช่ ให้รันสีตามลำดับปกติ
-            color = chartColors[pairIndex % chartColors.length];
-        }
-
-        if (ds.mode === 'actual') {
-            return {
-                ...ds,
-                borderColor: color,
-                backgroundColor: 'transparent',
-                borderWidth: 3,
-                pointRadius: 3,
-                tension: 0.3
-            };
-        } else {
-            return {
-                ...ds,
-                borderColor: color,
-                backgroundColor: 'transparent',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                pointRadius: 0,
-                tension: 0.3
-            };
-        }
-    });
-
-    new Chart(ctxForecast, {
+    // 1. Line Chart
+    new Chart(document.getElementById('lineChart'), {
         type: 'line',
-        data: { labels: forecastLabels, datasets: lineDatasets },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
-            scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
+        data: {
+            labels: {{ line_labels|safe }},
+            datasets: [{
+                label: 'เงินคงเหลือสะสม', data: {{ line_values|safe }},
+                borderColor: '#0d6efd', backgroundColor: 'rgba(13, 110, 253, 0.05)',
+                fill: true, tension: 0.4, pointRadius: 0, borderWidth: 3
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } } } }
+    });
+
+    // 2. Pie Chart (แก้ไขแล้ว!)
+    new Chart(document.getElementById('pieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ pie_labels|safe }},
+            datasets: [{
+                data: {{ pie_values|safe }}, 
+                backgroundColor: {{ pie_colors|safe }}, // ✅ ใช้รหัสสี Hex จาก Python
+                borderWidth: 2, 
+                borderColor: '#fff'
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { 
+                    position: 'bottom', 
+                    labels: { boxWidth: 12, padding: 15 } 
+                } 
+            } 
         }
     });
 
-    // --- 2. กราฟแท่ง (Stacked Bar) ---
-    const ctxWeekly = document.getElementById('weeklyChart').getContext('2d');
-    const weeklyLabels = {{ weekly_labels|safe }};
-    let stackedDatasets = {{ stacked_datasets|safe }};
-
-    stackedDatasets.forEach((dataset, index) => {
-        // ถ้า Python ส่งสีมาให้แล้ว (เช่น หมวด 'อื่นๆ') ให้ใช้สีนั้น
-        if (dataset.backgroundColor) return;
-
-        // 🛠️ Logic เลือกสี:
-        if (dataset.label === 'ไม่ระบุ') {
-            dataset.backgroundColor = unknownColor; // บังคับสีเทา
-        } else {
-            dataset.backgroundColor = chartColors[index % chartColors.length];
-        }
-    });
-
-    new Chart(ctxWeekly, {
+    // 3. Bar Chart
+    new Chart(document.getElementById('barChart'), {
         type: 'bar',
-        data: { labels: weeklyLabels, datasets: stackedDatasets },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } },
-            scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true } }
-        }
+        data: {
+            labels: {{ bar_labels|safe }},
+            datasets: [
+                { label: 'รายรับ', data: {{ bar_income|safe }}, backgroundColor: '#1cc88a', borderRadius: 6 },
+                { label: 'รายจ่าย', data: {{ bar_expense|safe }}, backgroundColor: '#e74a3b', borderRadius: 6 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { grid: { display: false } } } }
     });
 </script>
 {% endblock %}

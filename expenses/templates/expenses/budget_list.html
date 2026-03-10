@@ -2,88 +2,165 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm sticky-top" style="top: 20px;">
-            <div class="card-body">
-                <h5 class="card-title fw-bold text-primary mb-3">🎯 ตั้งงบประมาณเดือนนี้</h5>
-                <form method="post">
+    <div class="col-md-8 mb-4">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-bar-chart-fill text-primary me-2"></i>
+                        สถานะงบประมาณ (เดือน {{ current_month }}/{{ current_year }})
+                    </h5>
+                    <span class="badge bg-light text-dark border rounded-pill px-3">{{ budget_data|length }} หมวดหมู่</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr class="small text-secondary">
+                                <th style="width: 30%;">หมวดหมู่</th>
+                                <th style="width: 45%;">สถานะการใช้จ่าย</th>
+                                <th style="width: 15%;" class="text-end">คงเหลือ</th>
+                                <th style="width: 10%;" class="text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in budget_data %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{{ item.category.color|default:'secondary' }} bg-opacity-10 text-{{ item.category.color|default:'secondary' }} border border-{{ item.category.color|default:'secondary' }} p-2 rounded-pill small">
+                                        <i class="bi {{ item.category.icon|default:'bi-tags-fill' }} me-2"></i>
+                                        {{ item.category.name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if item.limit > 0 %}
+                                        <div class="d-flex justify-content-between small mb-1">
+                                            <span class="fw-bold">ใช้ไป {{ item.used|floatformat:0 }}</span>
+                                            <span class="text-muted">งบ {{ item.limit|floatformat:0 }}</span>
+                                        </div>
+                                        <div class="progress rounded-pill shadow-sm" style="height: 8px; background-color: #f0f0f0;">
+                                            <div class="progress-bar bg-{{ item.status_color }} progress-bar-striped progress-bar-animated" 
+                                                role="progressbar" 
+                                                style="width: {{ item.percent }}%"></div>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted small fst-italic">ยังไม่ได้ตั้งงบประมาณ</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if item.limit > 0 %}
+                                        <div class="{% if item.remain < 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
+                                            {{ item.remain|floatformat:0 }}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if item.budget_id %}
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <a href="{% url 'delete_budget' item.budget_id %}" class="btn btn-sm btn-outline-danger rounded-circle p-1 ms-1 shadow-sm" onclick="return confirm('ลบงบประมาณหมวด {{ item.category.name }}?')" title="ลบ">
+                                                🗑️
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-5 text-muted">ไม่พบรายการงบประมาณ</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top" style="top: 20px;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="bg-primary bg-opacity-10 p-2 rounded-3 me-3">
+                        <i class="bi bi-target text-primary fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-0">ตั้งงบประมาณเดือนนี้</h5>
+                </div>
+
+                <form method="post" id="budgetForm">
                     {% csrf_token %}
+                    
                     <div class="mb-3">
-                        <label class="form-label">เลือกหมวดหมู่</label>
-                        {{ form.category }}
+                        <label class="form-label small fw-bold text-secondary">เลือกหมวดหมู่</label>
+                        <div class="dropdown">
+                            <button class="btn btn-white border w-100 text-start d-flex align-items-center justify-content-between p-2 rounded-3" 
+                                    type="button" id="catDropdownBtn" data-bs-toggle="dropdown">
+                                <span id="selectedCatDisplay"><i class="bi bi-list-ul me-2"></i> กรุณาเลือก...</span>
+                                <i class="bi bi-chevron-down small"></i>
+                            </button>
+                            <ul class="dropdown-menu w-100 shadow border-0 rounded-4 p-2" style="max-height: 250px; overflow-y: auto;">
+                                {% for cat in form.fields.category.queryset %}
+                                <li>
+                                    <a class="dropdown-item rounded-3 p-2 mb-1" href="javascript:void(0)" 
+                                       onclick="setBudgetCategory('{{ cat.id }}', '{{ cat.name }}', '{{ cat.icon }}', '{{ cat.color }}')">
+                                        <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start">
+                                            <i class="bi {{ cat.icon }} me-2"></i> {{ cat.name }}
+                                        </span>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <input type="hidden" name="category" id="id_category_hidden">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">วงเงิน (บาท)</label>
-                        {{ form.amount_limit }}
+
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-secondary">วงเงิน (บาท)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0 text-muted">฿</span>
+                            <input type="number" name="amount_limit" id="id_amount_limit" 
+                                class="form-control bg-light border-0" 
+                                step="100" min="0" placeholder="0" required>
+                        </div>
+                        <div class="form-text small">กดขึ้น-ลง เพื่อเพิ่ม/ลดทีละ 100</div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill">บันทึกงบประมาณ</button>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-pill shadow-sm">
+                        <i class="bi bi-check-lg me-1"></i> บันทึกงบประมาณ
+                    </button>
                 </form>
             </div>
         </div>
     </div>
-
-    <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="card-title fw-bold mb-0">📊 สถานะงบประมาณ (เดือน {{ current_month }}/{{ current_year }})</h5>
-                </div>
-
-                <div class="table-responsive">
-                <table class="table align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width: 25%;">หมวดหมู่</th>
-                            <th style="width: 45%;">สถานะการใช้จ่าย</th>
-                            <th style="width: 20%;" class="text-end">คงเหลือ</th>
-                            <th style="width: 10%;" class="text-center">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in budget_data %}
-                        <tr>
-                            <td class="fw-bold">{{ item.category.name }}</td>
-                            <td>
-                                {% if item.limit > 0 %}
-                                    <div class="d-flex justify-content-between small mb-1">
-                                        <span>ใช้ไป {{ item.used|floatformat:0 }}</span>
-                                        <span class="text-muted">งบ {{ item.limit|floatformat:0 }}</span>
-                                    </div>
-                                    <div class="progress" style="height: 10px;">
-                                        <div class="progress-bar bg-{{ item.status_color }}" role="progressbar" 
-                                            style="width: {{ item.percent }}%"></div>
-                                    </div>
-                                {% else %}
-                                    <span class="text-muted small">ยังไม่ได้ตั้งงบ</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                {% if item.limit > 0 %}
-                                    <span class="{% if item.remain < 0 %}text-danger{% else %}text-success{% endif %} fw-bold">
-                                        {{ item.remain|floatformat:0 }}
-                                    </span>
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                            <td class="text-center">
-                                {% if item.budget_id %}
-                                    <a href="{% url 'edit_budget' item.budget_id %}" class="btn btn-sm btn-outline-warning border-0 p-1" title="แก้ไข">
-                                        ✏️
-                                    </a>
-                                    <a href="{% url 'delete_budget' item.budget_id %}" class="btn btn-sm btn-outline-danger border-0 p-1" onclick="return confirm('ลบงบประมาณ?')" title="ลบ">
-                                        🗑️
-                                    </a>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
+
+<script>
+    // ฟังก์ชันสำหรับเลือกหมวดหมู่ใน Custom Dropdown
+    function setBudgetCategory(id, name, icon, color) {
+        document.getElementById('id_category_hidden').value = id;
+        const display = document.getElementById('selectedCatDisplay');
+        display.innerHTML = `
+            <span class="badge bg-${color} bg-opacity-10 text-${color} border border-${color} p-1 rounded-pill">
+                <i class="bi ${icon} me-1"></i> ${name}
+            </span>
+        `;
+    }
+</script>
+
+<style>
+    /* ตกแต่ง Input Number ให้ดูสะอาดตา */
+    input[type="number"] {
+        padding: 0.6rem 1rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    .btn-white {
+        background-color: #f8f9fc;
+        border-color: #dee2e6;
+    }
+    .btn-white:hover {
+        background-color: #fff;
+        border-color: #4e73df;
+    }
+</style>
 {% endblock %}

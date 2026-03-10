@@ -1,0 +1,47 @@
+<div class="table-responsive">
+    <table class="table align-middle table-hover border-top">
+        <thead class="table-light">
+            <tr>
+                <th width="70%">ชื่อหมวดหมู่และหน้าตา</th>
+                <th width="30%" class="text-end">จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+                {% if cat.type == type %}
+                <tr>
+                    <td>
+                        <span class="badge bg-{{ cat.color|default:'secondary' }} bg-opacity-10 text-{{ cat.color|default:'secondary' }} border border-{{ cat.color|default:'secondary' }} p-2 rounded-pill fs-6">
+                            <i class="bi {{ cat.icon|default:'bi-tags-fill' }} me-2"></i> {{ cat.name }}
+                        </span>
+                        {% if cat.is_global %}
+                            <span class="ms-2 badge bg-light text-muted fw-normal small"><i class="bi bi-lock-fill me-1"></i> ระบบ</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if not cat.is_global or request.user.is_superuser %}
+                            <button class="btn btn-sm btn-outline-warning rounded-circle p-1 shadow-sm" 
+                                    style="width:34px;height:34px;"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#categoryModal"
+                                    onclick="openEditModal('{{ cat.id }}', '{{ cat.name }}', '{{ cat.type }}', '{{ cat.icon }}', '{{ cat.color }}')">
+                                ✏️
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger rounded-circle p-1 ms-1 shadow-sm" 
+                                    style="width:34px;height:34px;"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#deleteModal{{ cat.id }}">
+                                🗑️
+                            </button>
+                        {% else %}
+                            <span class="text-muted small px-2">🔒 ล็อค</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+            {% empty %}
+                <tr><td colspan="2" class="text-center py-4 text-muted">ยังไม่มีหมวดหมู่ในกลุ่มนี้</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
