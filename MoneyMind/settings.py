@@ -84,7 +84,7 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 EMAIL_HOST_USER = 'moneymind.noreply@gmail.com'
-EMAIL_HOST_PASSWORD = 'awbbwetrstuqtjrr'
+EMAIL_HOST_PASSWORD = ''
 
 DEFAULT_FROM_EMAIL = 'MoneyMind Admin <moneymind.noreply@gmail.com>'
 
