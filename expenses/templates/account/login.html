@@ -41,7 +41,10 @@
                         <input type="password" name="password" class="form-control rounded-3" id="floatingPassword" placeholder="Password">
                         <label for="floatingPassword">รหัสผ่าน</label>
                     </div>
-                    <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold" type="submit">เข้าสู่ระบบ</button>
+                    <div class="mt-4 small">
+                        <a href="{% url 'reset_password' %}"  class="text-decoration-none  fw-bold">ลืมรหัสผ่าน?</a>
+                    </div>
+                    <button class="btn btn-primary w-100 py-3 rounded-pill fw-bold mt-3" type="submit">เข้าสู่ระบบ</button>
                 </form>
                 
                 <div class="mt-4 small">

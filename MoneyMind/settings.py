@@ -76,7 +76,17 @@ ACCOUNT_PREVENT_ENUMERATION = False
 
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Forget password
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = 'moneymind.noreply@gmail.com'
+EMAIL_HOST_PASSWORD = 'awbbwetrstuqtjrr'
+
+DEFAULT_FROM_EMAIL = 'MoneyMind Admin <moneymind.noreply@gmail.com>'
 
 # อนุญาตให้เชื่อมต่ออัตโนมัติถ้าอีเมลตรงกัน
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
@@ -201,9 +211,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+# LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "th"
 
-TIME_ZONE = "UTC"
+# TIME_ZONE = "UTC"
+TIME_ZONE = 'Asia/Bangkok'
 
 USE_I18N = True
 
