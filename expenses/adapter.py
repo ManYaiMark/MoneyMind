@@ -8,7 +8,7 @@ from allauth.exceptions import ImmediateHttpResponse
 from django.shortcuts import redirect , resolve_url
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from expenses.models import SocialLinkConfirmation
+# from expenses.models import SocialLinkConfirmation
 from django import forms
 
 User = get_user_model()

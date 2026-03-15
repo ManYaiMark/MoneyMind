@@ -30,7 +30,7 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import datetime, timedelta,date
 
-from .models import Transaction, Category, Budget , TrainingData , CategoryKeyword , UserCategoryPreference , User ,SocialLinkConfirmation ,SocialAccount
+from .models import Transaction, Category, Budget  , CategoryKeyword  , User  ,SocialAccount
 from .forms import  SmartInputForm, CategoryForm, BudgetForm , UploadFileForm , TransactionForm  , UserUpdateForm , ProfileImageForm
 from .utils import predict_category_fuzzy
 from allauth.account.views import PasswordResetView
@@ -42,45 +42,45 @@ def is_admin(user):
 
 User = get_user_model()
 
-def confirm_account_link(request):
-    email = request.session.get('pending_google_email')
-    uid = request.session.get('pending_google_uid')
-    provider = request.session.get('pending_google_provider')
-    picture_url = request.session.get('pending_google_picture')
+# def confirm_account_link(request):
+#     email = request.session.get('pending_google_email')
+#     uid = request.session.get('pending_google_uid')
+#     provider = request.session.get('pending_google_provider')
+#     picture_url = request.session.get('pending_google_picture')
     
-    if not email:
-        return redirect('account_login')
+#     if not email:
+#         return redirect('account_login')
 
-    if request.method == 'POST':
-        user = User.objects.filter(email__iexact=email).first()
-        if user:
-            SocialLinkConfirmation.objects.get_or_create(user=user)
+#     if request.method == 'POST':
+#         user = User.objects.filter(email__iexact=email).first()
+#         if user:
+#             SocialLinkConfirmation.objects.get_or_create(user=user)
             
-            if uid and provider:
-                SocialAccount.objects.get_or_create(
-                    user=user,
-                    provider=provider,
-                    uid=uid
-                )
+#             if uid and provider:
+#                 SocialAccount.objects.get_or_create(
+#                     user=user,
+#                     provider=provider,
+#                     uid=uid
+#                 )
             
-            if picture_url and not user.profile.profile_picture:
-                try:
-                    response = requests.get(picture_url)
-                    if response.status_code == 200:
-                        file_name = f"{user.username}_google.jpg"
-                        user.profile.profile_picture.save(file_name, ContentFile(response.content), save=True)
-                except Exception:
-                    pass
+#             if picture_url and not user.profile.profile_picture:
+#                 try:
+#                     response = requests.get(picture_url)
+#                     if response.status_code == 200:
+#                         file_name = f"{user.username}_google.jpg"
+#                         user.profile.profile_picture.save(file_name, ContentFile(response.content), save=True)
+#                 except Exception:
+#                     pass
             
-            request.session.pop('pending_google_email', None)
-            request.session.pop('pending_google_uid', None)
-            request.session.pop('pending_google_provider', None)
-            request.session.pop('pending_google_picture', None)
+#             request.session.pop('pending_google_email', None)
+#             request.session.pop('pending_google_uid', None)
+#             request.session.pop('pending_google_provider', None)
+#             request.session.pop('pending_google_picture', None)
             
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return redirect('dashboard')
+#             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+#             return redirect('dashboard')
 
-    return render(request, 'account/confirm_account_link.html', {'email': email})
+#     return render(request, 'account/confirm_account_link.html', {'email': email})
 
 # @login_required
 # def profile_edit_view(request):
@@ -149,19 +149,19 @@ def change_password_modal(request):
         user = request.user
         
         if not user.check_password(old_password):
-            messages.error(request, 'รหัสผ่านเดิมไม่ถูกต้อง')
+            
             return JsonResponse({'status': 'error', 'message': 'รหัสผ่านเดิมไม่ถูกต้อง'}, status=400)
             
         if new_password != confirm_password:
-            messages.error(request, 'ยืนยันรหัสผ่านใหม่ไม่ตรงกัน')
+            
             return JsonResponse({'status': 'error', 'message': 'ยืนยันรหัสผ่านใหม่ไม่ตรงกัน'}, status=400)
         
         user.set_password(new_password)
         user.save()
         update_session_auth_hash(request, user)
-        messages.success(request, 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว')
+        messages.success(request, 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว ')
         
-        return JsonResponse({'status': 'success', 'message': 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว'})
+        return JsonResponse({'status': 'success', 'message': 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว '})
         
     return JsonResponse({'status': 'error', 'message': 'คำขอไม่ถูกต้อง'}, status=400)
 
@@ -174,15 +174,15 @@ def set_password_modal(request):
         user = request.user
         
         if user.has_usable_password():
-            messages.error(request, 'บัญชีนี้มีรหัสผ่านอยู่แล้ว')
+            # messages.error(request, 'บัญชีนี้มีรหัสผ่านอยู่แล้ว')
             return JsonResponse({'status': 'error', 'message': 'บัญชีนี้มีรหัสผ่านอยู่แล้ว'}, status=400)
             
         if new_password != confirm_password:
-            messages.error(request, 'ยืนยันรหัสผ่านไม่ตรงกัน')
+            # messages.error(request, 'ยืนยันรหัสผ่านไม่ตรงกัน')
             return JsonResponse({'status': 'error', 'message': 'ยืนยันรหัสผ่านไม่ตรงกัน'}, status=400)
             
         if len(new_password) < 8:
-            messages.error(request, 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร')
+            # messages.error(request, 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร')
             return JsonResponse({'status': 'error', 'message': 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร'}, status=400)
         
         user.set_password(new_password)
@@ -458,75 +458,75 @@ def delete_user_permanent(request, user_id):
 
 
 # ไม่ได้ใช้แล้ว เพราะย้ายไปใช้ fuzzy logic แทน
-@user_passes_test(is_admin)
-def ai_manager(request):
-    # 1. จัดการ Re-train
-    if request.method == 'POST' and 'retrain' in request.POST:
-        ai_classifier.train_model()
-        messages.success(request, "Re-train Model เรียบร้อยแล้ว!")
-        return redirect('ai_manager')
+# @user_passes_test(is_admin)
+# def ai_manager(request):
+#     # 1. จัดการ Re-train
+#     if request.method == 'POST' and 'retrain' in request.POST:
+#         ai_classifier.train_model()
+#         messages.success(request, "Re-train Model เรียบร้อยแล้ว!")
+#         return redirect('ai_manager')
 
-    # 2. จัดการ Import CSV Training Data
-    if request.method == 'POST' and 'import_csv' in request.POST and request.FILES['csv_file']:
-        try:
-            csv_file = request.FILES['csv_file']
+#     # 2. จัดการ Import CSV Training Data
+#     if request.method == 'POST' and 'import_csv' in request.POST and request.FILES['csv_file']:
+#         try:
+#             csv_file = request.FILES['csv_file']
             
-            # ใช้ utf-8-sig เพื่อรองรับไฟล์จาก Excel/Notepad ที่มี BOM
-            decoded_file = csv_file.read().decode('utf-8-sig').splitlines()
-            reader = csv.reader(decoded_file)
+#             # ใช้ utf-8-sig เพื่อรองรับไฟล์จาก Excel/Notepad ที่มี BOM
+#             decoded_file = csv_file.read().decode('utf-8-sig').splitlines()
+#             reader = csv.reader(decoded_file)
             
-            count = 0
-            created_cats = 0
+#             count = 0
+#             created_cats = 0
             
-            for row in reader:
-                # ข้ามบรรทัดหัวตาราง (ถ้าบรรทัดแรกคือคำว่า "คำศัพท์")
-                if len(row) >= 1 and "คำศัพท์" in row[0]:
-                    continue
+#             for row in reader:
+#                 # ข้ามบรรทัดหัวตาราง (ถ้าบรรทัดแรกคือคำว่า "คำศัพท์")
+#                 if len(row) >= 1 and "คำศัพท์" in row[0]:
+#                     continue
 
-                if len(row) >= 2:
-                    text = row[0].strip()
-                    cat_name = row[1].strip()
+#                 if len(row) >= 2:
+#                     text = row[0].strip()
+#                     cat_name = row[1].strip()
                     
-                    if not text or not cat_name: continue
+#                     if not text or not cat_name: continue
 
-                    # 1. หาหมวดหมู่ (ถ้าไม่มี ให้สร้างใหม่เลย!)
-                    cat = Category.objects.filter(name__iexact=cat_name).first()
-                    if not cat:
-                        # สร้างหมวดหมู่ใหม่ (Default ให้เป็นรายจ่ายไว้ก่อน)
-                        cat = Category.objects.create(
-                            name=cat_name, 
-                            type='EXPENSE', 
-                            is_global=True # ให้เป็น Global ไปเลยเพราะ Admin นำเข้า
-                        )
-                        created_cats += 1
+#                     # 1. หาหมวดหมู่ (ถ้าไม่มี ให้สร้างใหม่เลย!)
+#                     cat = Category.objects.filter(name__iexact=cat_name).first()
+#                     if not cat:
+#                         # สร้างหมวดหมู่ใหม่ (Default ให้เป็นรายจ่ายไว้ก่อน)
+#                         cat = Category.objects.create(
+#                             name=cat_name, 
+#                             type='EXPENSE', 
+#                             is_global=True # ให้เป็น Global ไปเลยเพราะ Admin นำเข้า
+#                         )
+#                         created_cats += 1
 
-                    # 2. บันทึกลง Training Data (ถ้ายังไม่มีคำนี้)
-                    obj, created = TrainingData.objects.get_or_create(
-                        text=text,
-                        category=cat,
-                        defaults={'is_verified': True}
-                    )
-                    if created:
-                        count += 1
+#                     # 2. บันทึกลง Training Data (ถ้ายังไม่มีคำนี้)
+#                     obj, created = TrainingData.objects.get_or_create(
+#                         text=text,
+#                         category=cat,
+#                         defaults={'is_verified': True}
+#                     )
+#                     if created:
+#                         count += 1
             
-            # Import เสร็จแล้ว Re-train ทันที
-            ai_classifier.train_model()
+#             # Import เสร็จแล้ว Re-train ทันที
+#             ai_classifier.train_model()
             
-            msg = f"นำเข้าศัพท์ใหม่ {count} คำ"
-            if created_cats > 0:
-                msg += f" และสร้างหมวดหมู่ใหม่ {created_cats} หมวด"
+#             msg = f"นำเข้าศัพท์ใหม่ {count} คำ"
+#             if created_cats > 0:
+#                 msg += f" และสร้างหมวดหมู่ใหม่ {created_cats} หมวด"
             
-            messages.success(request, msg + " เรียบร้อย!")
+#             messages.success(request, msg + " เรียบร้อย!")
             
-        except Exception as e:
-            messages.error(request, f"เกิดข้อผิดพลาด: {e}")
+#         except Exception as e:
+#             messages.error(request, f"เกิดข้อผิดพลาด: {e}")
             
-        return redirect('ai_manager')
+#         return redirect('ai_manager')
 
-    # แสดงข้อมูล Training Data ล่าสุด 20 รายการ
-    training_data = TrainingData.objects.all().order_by('-created_at')[:20]
+#     # แสดงข้อมูล Training Data ล่าสุด 20 รายการ
+#     training_data = TrainingData.objects.all().order_by('-created_at')[:20]
     
-    return render(request, 'expenses/ai_manager.html', {'training_data': training_data})
+#     return render(request, 'expenses/ai_manager.html', {'training_data': training_data})
 
 # ไม่ได้ใช้แล้ว
 @user_passes_test(is_admin)

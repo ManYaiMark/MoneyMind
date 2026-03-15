@@ -1,6 +1,7 @@
 Django
 django-allauth
 django-cleanup
+python-dotenv
 pandas
 openpyxl
 Pillow

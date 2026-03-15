@@ -4,11 +4,13 @@ from datetime import datetime
 from django import forms
 from django.contrib.auth.forms import PasswordChangeForm
 
-class AdminUserForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'is_active', 'is_staff', 'is_superuser']
+# ไม่ได้ใช้
+# class AdminUserForm(forms.ModelForm):
+#     class Meta:
+#         model = User
+#         fields = ['username', 'email', 'is_active', 'is_staff', 'is_superuser']
 
+# ยังใช้
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField(label='อีเมล', widget=forms.TextInput(attrs={'class': 'form-control'}))
     first_name = forms.CharField(label='ชื่อจริง', required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -25,7 +27,7 @@ class UserUpdateForm(forms.ModelForm):
             self.fields['email'].disabled = True # ล็อคไม่ให้แก้
             self.fields['email'].help_text = "ล็อกอินผ่าน Google ไม่สามารถเปลี่ยนอีเมลได้"
 
-
+# ยังใช้
 class ProfileImageForm(forms.ModelForm):
     class Meta:
         model = Profile
@@ -47,6 +49,7 @@ class ProfileImageForm(forms.ModelForm):
 #             'info' : forms.Textarea(attrs={'rows':3, 'placeholder': 'Add information'})
 #         }
 
+# ยังใช้
 class SmartInputForm(forms.Form):
     raw_data = forms.CharField(
         widget=forms.Textarea(attrs={
@@ -57,6 +60,7 @@ class SmartInputForm(forms.Form):
         label=''
     )
 
+# ยังใช้
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
@@ -74,7 +78,7 @@ class TransactionForm(forms.ModelForm):
             'category': 'หมวดหมู่'
         }
 
-# import 
+# import ใช้
 class UploadFileForm(forms.Form):
     file = forms.FileField(
         label='เลือกไฟล์ Excel หรือ CSV',
@@ -82,6 +86,7 @@ class UploadFileForm(forms.Form):
     )
     
 
+# ใช้
 class CategoryForm(forms.ModelForm):
     class Meta:
         print("Initializing CategoryForm Meta")
@@ -100,6 +105,7 @@ class CategoryForm(forms.ModelForm):
             'color': 'สี'
         }
 
+# ใช้
 class BudgetForm(forms.ModelForm):
     class Meta:
         model = Budget

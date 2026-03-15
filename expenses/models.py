@@ -10,12 +10,12 @@ from django.dispatch import receiver
 
 from allauth.socialaccount.models import SocialAccount
 
-class SocialLinkConfirmation(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='social_confirmation')
-    confirmed_at = models.DateTimeField(auto_now_add=True)
+# class SocialLinkConfirmation(models.Model):
+#     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='social_confirmation')
+#     confirmed_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.user.email} confirmed at {self.confirmed_at}"
+#     def __str__(self):
+#         return f"{self.user.email} confirmed at {self.confirmed_at}"
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -100,13 +100,13 @@ class Category(models.Model):
         return f"{self.name} ({self.get_type_display()})"
     
 
-class UserCategoryPreference(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    is_hidden = models.BooleanField(default=False)
+# class UserCategoryPreference(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+#     is_hidden = models.BooleanField(default=False)
 
-    class Meta:
-        unique_together = ('user', 'category')
+#     class Meta:
+#         unique_together = ('user', 'category')
         
 
 class Budget(models.Model):
@@ -133,22 +133,19 @@ class Transaction(models.Model):
     def __str__(self):
         return f"{self.description} - {self.amount}"
     
-class TrainingData(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True) 
-    text = models.CharField(max_length=255)       
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)  
-    is_verified = models.BooleanField(default=False) 
-    created_at = models.DateTimeField(auto_now_add=True)
+# class TrainingData(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True) 
+#     text = models.CharField(max_length=255)       
+#     category = models.ForeignKey(Category, on_delete=models.CASCADE)  
+#     is_verified = models.BooleanField(default=False) 
+#     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.text} -> {self.category.name}"
+#     def __str__(self):
+#         return f"{self.text} -> {self.category.name}"
     
 class CategoryKeyword(models.Model):
     word = models.CharField(max_length=100, unique=True, verbose_name="คำค้นหา (Keyword)")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name="หมวดหมู่ที่คู่กัน")
-    
-    # เพิ่ม user หากอยากให้ keywords นี้เป็นส่วนตัว (แต่ถ้าเป็นคำทั่วไป เช่น 7-11 ไม่ต้องใส่ user ก็ได้ ให้เป็น Global)
-    # ในที่นี้ผมสมมติว่าเป็น Global Keyword ที่แอดมินดูแลนะครับ
     
     def __str__(self):
         return f"{self.word} -> {self.category.name}"

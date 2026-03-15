@@ -26,7 +26,7 @@ urlpatterns = [
     path('management/users/<int:user_id>/delete/', views.admin_user_delete, name='admin_user_delete'),
 
     # ไม่ไดเใช้แล้ว
-    path('ai-manager/', views.ai_manager, name='ai_manager'),
+    # path('ai-manager/', views.ai_manager, name='ai_manager'),
     path('ai-manager/template/', views.download_ai_template, name='download_ai_template'),
 
     path('transactions/', views.transaction_list, name='transaction_list'),
@@ -44,7 +44,7 @@ urlpatterns = [
 
     # path('admin/users/', views.admin_user_list, name='admin_user_list'),
     # about login
-    path('confirm-link/', views.confirm_account_link, name='confirm_account_link'),
+    # path('confirm-link/', views.confirm_account_link, name='confirm_account_link'),
     
     # password reset
     path('reset_password/', auth_views.PasswordResetView.as_view(template_name="account/password_reset.html",
