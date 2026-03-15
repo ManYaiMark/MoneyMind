@@ -125,4 +125,3 @@ class BudgetForm(forms.ModelForm):
         if user:
             self.fields['category'].queryset = Category.objects.filter(type='EXPENSE')
 
-

@@ -36,6 +36,17 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
                 email_address.verified = True
                 email_address.save()
                 
+            # ดึงรูปลง Profile กรณีเชื่อมบัญชีสำเร็จแล้วแต่ยังไม่มีรูปโปรไฟล์
+            picture_url = sociallogin.account.extra_data.get("picture")
+            if picture_url and hasattr(user, 'profile') and not user.profile.profile_picture:
+                try:
+                    response = requests.get(picture_url)
+                    if response.status_code == 200:
+                        file_name = f"{user.username}_google.jpg"
+                        user.profile.profile_picture.save(file_name, ContentFile(response.content), save=True)
+                except Exception:
+                    pass
+
                 
     def save_user(self, request, sociallogin, form=None):
         user = super().save_user(request, sociallogin, form)
@@ -45,6 +56,17 @@ class MySocialAccountAdapter(DefaultSocialAccountAdapter):
             email_address.verified = True
             email_address.save()
             
+        # ดึงรูปโปรไฟล์จาก Google มาบันทึกลง Profile สำหรับผู้ใช้ใหม่
+        picture_url = sociallogin.account.extra_data.get("picture")
+        if picture_url and hasattr(user, 'profile') and not user.profile.profile_picture:
+            try:
+                response = requests.get(picture_url)
+                if response.status_code == 200:
+                    file_name = f"{user.username}_google.jpg"
+                    user.profile.profile_picture.save(file_name, ContentFile(response.content), save=True)
+            except Exception:
+                pass
+
         return user
 
 class MyAccountAdapter(DefaultAccountAdapter):

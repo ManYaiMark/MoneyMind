@@ -3,7 +3,7 @@
 {% block content %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
-    /* 🎨 ธีมปฏิทินสีฟ้าพาสเทล */
+    /* ปรับแต่งปฏิทินสีฟ้าพาสเทล */
     .flatpickr-calendar { border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
     .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange { background: #0d6efd !important; border-color: #0d6efd !important; }
     .flatpickr-day.inRange { background: #e3f2fd !important; box-shadow: -5px 0 0 #e3f2fd, 5px 0 0 #e3f2fd !important; border-color: #e3f2fd !important; }
@@ -13,10 +13,8 @@
     
     /* ✅ วันที่ไม่มีข้อมูลให้ตัวเลขสีจาง */
     .day-no-data { color: #d1d3e2 !important; opacity: 0.5; }
-
-    /* ปรับเส้นขอบปุ่ม Download ให้เข้มขึ้นตามที่ต้องการ */
-    .btn-download-group .btn { border-color: #ced4da !important; font-weight: 500; }
-    .btn-download-group .btn:hover { background-color: #f8f9fa; border-color: #adb5bd !important; }
+    /* ✅ วันที่มีข้อมูลให้สีชัดเจนและมีพื้นหลังวงกลมอ่อนๆ */
+    .day-has-data { color: #0d6efd !important; font-weight: 700; background-color: rgba(13, 110, 253, 0.1); border-radius: 50%; }
 </style>
 
 <div class="container mt-4">
@@ -30,7 +28,7 @@
         </div>
         <div class="d-flex gap-2">
             <button type="button" id="bulkDeleteBtn" class="btn btn-danger shadow-sm d-none rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#bulkDeleteModal">
-                <i class="bi bi-trash3 me-1"></i> ลบที่เลือก (<span id="selectedCount">0</span>)
+                ลบที่เลือก (<span id="selectedCount">0</span>)
             </button>
             <a href="{% url 'add_smart_transaction' %}" class="btn btn-primary shadow-sm rounded-pill px-4">+ เพิ่มรายการใหม่</a>
         </div>
@@ -41,14 +39,14 @@
             <form method="get" id="filterForm" class="row g-3">
                 <div class="col-md-3">
                     <label class="small fw-bold text-secondary mb-1">ค้นหารายการ</label>
-                    <input type="text" name="q" class="form-control rounded-3 border-0 bg-light" placeholder="ระบุชื่อ..." value="{{ search_query }}">
+                    <input type="text" name="q" class="form-control rounded-3 border-0 bg-light" placeholder="ระบุชื่อรายการ..." value="{{ search_query }}">
                 </div>
 
                 <div class="col-md-4">
-                    <label class="small fw-bold text-secondary mb-1">ช่วงวันที่</label>
+                    <label class="small fw-bold text-secondary mb-1">ช่วงวันที่ (เริ่มต้นห้ามเลือก "วันนี้")</label>
                     <div class="input-group">
                         <span class="input-group-text border-0 bg-light rounded-start-3"><i class="bi bi-calendar3 text-primary"></i></span>
-                        <input type="text" id="dateRangeInput" class="form-control rounded-end-3 border-0 bg-light" readonly style="cursor: pointer;">
+                        <input type="text" id="dateRangeInput" class="form-control rounded-end-3 border-0 bg-light" placeholder="คลิกเลือกช่วงวันที่..." readonly style="cursor: pointer;">
                     </div>
                     <input type="hidden" name="start_date" id="hidden_start_date" value="{{ start_date }}">
                     <input type="hidden" name="end_date" id="hidden_end_date" value="{{ end_date }}">
@@ -63,15 +61,17 @@
                         </button>
                         <ul class="dropdown-menu w-100 shadow border-0 rounded-4 p-2" style="max-height: 250px; overflow-y: auto;">
                             <li><a class="dropdown-item rounded-3 mb-1" href="javascript:void(0)" onclick="setFilterCategory('', 'ทั้งหมด')">ทั้งหมด</a></li>
+                            <li class="dropdown-header small fw-bold text-success"><i class="bi bi-arrow-down-circle me-2"></i> รายรับ</li>
                             {% for cat in income_cats %}
-                            <li><a class="dropdown-item rounded-3 p-1 mb-1" href="javascript:void(0)" onclick="setFilterCategory('{{ cat.id }}', '{{ cat.name }}')">
+                            <li><a class="dropdown-item rounded-3 p-1 mb-1" href="javascript:void(0)" onclick="setFilterCategory('{{ cat.id }}', '{{ cat.name }}', '{{ cat.icon }}', '{{ cat.color }}')">
                                 <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start small">
                                     <i class="bi {{ cat.icon }} me-1"></i> {{ cat.name }}
                                 </span>
                             </a></li>
                             {% endfor %}
+                            <li class="dropdown-header small fw-bold text-danger"><i class="bi bi-arrow-up-circle me-2"></i> รายจ่าย</li>
                             {% for cat in expense_cats %}
-                            <li><a class="dropdown-item rounded-3 p-1 mb-1" href="javascript:void(0)" onclick="setFilterCategory('{{ cat.id }}', '{{ cat.name }}')">
+                            <li><a class="dropdown-item rounded-3 p-1 mb-1" href="javascript:void(0)" onclick="setFilterCategory('{{ cat.id }}', '{{ cat.name }}', '{{ cat.icon }}', '{{ cat.color }}')">
                                 <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start small">
                                     <i class="bi {{ cat.icon }} me-1"></i> {{ cat.name }}
                                 </span>
@@ -121,12 +121,7 @@
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-warning rounded-circle" data-bs-toggle="modal" data-bs-target="#editModal" 
                                         data-id="{{ txn.id }}" data-date="{{ txn.date|date:'Y-m-d' }}" data-desc="{{ txn.description }}" 
-                                        data-amount="{{ txn.amount }}" data-cat="{{ txn.category.id|default:'' }}" style="width:32px;height:32px;">✏️
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger rounded-circle p-1 ms-1 shadow-sm" data-bs-toggle="modal" 
-                                    data-bs-target="#deleteModal{{ txn.id }}" 
-                                    style="width:32px;height:32px;">🗑️
-                                </button>
+                                        data-amount="{{ txn.amount }}" data-cat="{{ txn.category.id|default:'' }}" style="width:32px;height:32px;">✏️</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -167,33 +162,26 @@
     </div>
 </div>
 
-{% for txn in transactions %}
-<div class="modal fade" id="deleteModal{{ txn.id }}" tabindex="-1">
+<div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-body text-center p-4">
-                <div class="mb-3 text-danger"><i class="bi bi-trash3-fill fs-1"></i></div>
-                <h5 class="fw-bold">ลบรายการ?</h5>
-                <p class="text-muted small">ต้องการลบ "{{ txn.description }}" ใช่หรือไม่?</p>
-                <div class="d-flex gap-2 justify-content-center mt-3">
-                    <a href="{% url 'delete_transaction' txn.id %}" class="btn btn-danger rounded-pill px-4 fw-bold text-white">ลบรายการ</a>
-                    <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">ยกเลิก</button>
-                </div>
+        <div class="modal-content rounded-4 border-0 shadow text-center p-4">
+            <div class="mb-3 text-danger"><span style="font-size: 3rem;">🗑️</span></div>
+            <h5 class="fw-bold">ลบรายการนี้?</h5>
+            <div class="d-flex gap-2 justify-content-center mt-3">
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger rounded-pill px-4">ลบรายการ</a>
+                <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">ยกเลิก</button>
             </div>
         </div>
     </div>
 </div>
-{% endfor %}
 
 <div class="modal fade" id="bulkDeleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow text-center p-4">
             <div class="mb-3 text-danger"><span style="font-size: 3rem;">🔥</span></div>
-            <h5 class="fw-bold">ลบรายการที่เลือก?</h5>
-            <p class="text-muted small">คุณกำลังจะลบ <span id="bulkDeleteCount" class="fw-bold text-danger">0</span> รายการ</p>
+            <h5 class="fw-bold">ลบ <span id="bulkDeleteCount">0</span> รายการ?</h5>
             <form method="post" action="{% url 'delete_multiple_transactions' %}" id="bulkDeleteForm">
-                {% csrf_token %}
-                <div id="bulkDeleteInputs"></div>
+                {% csrf_token %}<div id="bulkDeleteInputs"></div>
                 <div class="d-flex gap-2 justify-content-center mt-3">
                     <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">ยืนยันลบ</button>
                     <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">ยกเลิก</button>
@@ -205,97 +193,71 @@
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    const activeDates = {{ active_dates_json|safe }};
+    // ดึงวันที่ที่มีข้อมูลมาจาก View
+    // แปลงเป็น Set เพื่อให้ค้นหาได้รวดเร็วที่สุดระดับ (O(1)) ป้องกันปฏิทินค้าง
+    const activeDatesSet = new Set({{ active_dates_json|safe }});
 
     function setFilterCategory(id, name) {
         document.getElementById('filterCategoryInput').value = id;
-        document.getElementById('filterCatDisplay').innerText = name;
-    }
-
-    function formatDateLocal(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        document.getElementById('filterCatDisplay').innerText = id ? name : 'ทั้งหมด';
     }
 
     document.addEventListener("DOMContentLoaded", function() {
-        const todayObj = new Date();
-        const todayStr = formatDateLocal(todayObj);
+        const todayStr = new Date().toISOString().split('T')[0];
         const startVal = document.getElementById('hidden_start_date').value;
         const endVal = document.getElementById('hidden_end_date').value;
 
-        // ✅ 1. Flatpickr Logic (Date Shift & Auto-End Date)
+        // ✅ Flatpickr พร้อมเงื่อนไขพิเศษ
         flatpickr("#dateRangeInput", {
             mode: "range",
             dateFormat: "Y-m-d",
-            maxDate: "today",
+            maxDate: "today", // ห้ามเลือกอนาคต
             defaultDate: [startVal, endVal],
+            
+            // ✅ เปลี่ยนสีวันที่ไม่มีข้อมูลให้จางลง
             onDayCreate: function(dObj, dStr, fp, dayElem) {
-                const dateStr = formatDateLocal(dayElem.dateObj);
-                if (!activeDates.includes(dateStr)) {
+                const d = dayElem.dateObj;
+                // สร้าง Format YYYY-MM-DD แบบ Local Time ที่เร็วที่สุดและวันที่ไม่เพี้ยน
+                const dateStr = d.getFullYear() + "-" + 
+                                String(d.getMonth() + 1).padStart(2, '0') + "-" + 
+                                String(d.getDate()).padStart(2, '0');
+                                
+                if (!activeDatesSet.has(dateStr)) {
                     dayElem.classList.add("day-no-data");
+                } else {
+                    dayElem.classList.add("day-has-data");
                 }
             },
+
             onChange: function(selectedDates, dateStr, instance) {
-                if (selectedDates.length === 1) {
-                    const selStartStr = formatDateLocal(selectedDates[0]);
-                    if (selStartStr === todayStr) {
-                        alert("วันเริ่มต้นห้ามเป็นวันนี้");
+                if (selectedDates.length > 0) {
+                    const selStart = instance.formatDate(selectedDates[0], "Y-m-d");
+                    
+                    // ✅ ห้ามเลือกวันเริ่มต้นเป็น "วันนี้"
+                    if (selStart === todayStr) {
+                        alert("วันเริ่มต้นต้องเป็นอดีตเท่านั้น (เลือกได้มากสุดคือเมื่อวาน)");
                         instance.clear();
                         return;
                     }
-                    instance.setDate([selectedDates[0], todayObj], true);
-                    document.getElementById('hidden_start_date').value = selStartStr;
-                    document.getElementById('hidden_end_date').value = todayStr;
-                } else if (selectedDates.length === 2) {
-                    document.getElementById('hidden_start_date').value = formatDateLocal(selectedDates[0]);
-                    document.getElementById('hidden_end_date').value = formatDateLocal(selectedDates[1]);
+
+                    if (selectedDates.length === 2) {
+                        const selEnd = instance.formatDate(selectedDates[1], "Y-m-d");
+                        
+                        // ✅ วันสิ้นสุดต้องมากกว่าวันเริ่มต้น
+                        if (selEnd <= selStart) {
+                            alert("วันสิ้นสุดต้องอยู่หลังวันเริ่มต้น");
+                            instance.clear();
+                            return;
+                        }
+                        
+                        document.getElementById('hidden_start_date').value = selStart;
+                        document.getElementById('hidden_end_date').value = selEnd;
+                    }
                 }
             }
         });
 
-        // ✅ 2. Bulk Delete Logic (ส่วนที่หายไป)
-        const selectAll = document.getElementById('selectAll');
-        const checkboxes = document.querySelectorAll('.txn-checkbox');
-        const bulkBtn = document.getElementById('bulkDeleteBtn');
-        const countSpan = document.getElementById('selectedCount');
-        const bulkModalCount = document.getElementById('bulkDeleteCount');
-
-        function updateBulkButton() {
-            const checked = document.querySelectorAll('.txn-checkbox:checked');
-            countSpan.innerText = checked.length;
-            bulkModalCount.innerText = checked.length;
-            if (checked.length > 0) {
-                bulkBtn.classList.remove('d-none');
-            } else {
-                bulkBtn.classList.add('d-none');
-            }
-        }
-
-        selectAll.addEventListener('change', function() {
-            checkboxes.forEach(cb => cb.checked = selectAll.checked);
-            updateBulkButton();
-        });
-
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', updateBulkButton);
-        });
-
-        // เตรียมข้อมูลส่งไปที่ Bulk Delete Form
-        document.getElementById('bulkDeleteModal').addEventListener('show.bs.modal', function() {
-            const container = document.getElementById('bulkDeleteInputs');
-            container.innerHTML = '';
-            document.querySelectorAll('.txn-checkbox:checked').forEach(cb => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'transaction_ids';
-                input.value = cb.value;
-                container.appendChild(input);
-            });
-        });
-
-        // ✅ 3. Modal Edit Logic
+        // Modal Edit Setup
         var editModal = document.getElementById('editModal');
         editModal.addEventListener('show.bs.modal', function (event) {
             var btn = event.relatedTarget;
@@ -304,6 +266,40 @@
             document.getElementById('editAmount').value = btn.getAttribute('data-amount');
             document.getElementById('editCategory').value = btn.getAttribute('data-cat');
             document.getElementById('editForm').action = "{% url 'edit_transaction' 0 %}".replace('0', btn.getAttribute('data-id'));
+        });
+
+        // Modal Delete Setup
+        var deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            document.getElementById('confirmDeleteBtn').href = "{% url 'delete_transaction' 0 %}".replace('0', event.relatedTarget.getAttribute('data-id'));
+        });
+
+        // Bulk Actions
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.txn-checkbox');
+        const bulkBtn = document.getElementById('bulkDeleteBtn');
+
+        function updateBulk() {
+            const checked = document.querySelectorAll('.txn-checkbox:checked');
+            document.getElementById('selectedCount').innerText = checked.length;
+            document.getElementById('bulkDeleteCount').innerText = checked.length;
+            checked.length > 0 ? bulkBtn.classList.remove('d-none') : bulkBtn.classList.add('d-none');
+        }
+
+        selectAll.addEventListener('change', () => {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateBulk();
+        });
+        checkboxes.forEach(cb => cb.addEventListener('change', updateBulk));
+
+        document.getElementById('bulkDeleteModal').addEventListener('show.bs.modal', () => {
+            const container = document.getElementById('bulkDeleteInputs');
+            container.innerHTML = '';
+            document.querySelectorAll('.txn-checkbox:checked').forEach(cb => {
+                const input = document.createElement('input');
+                input.type = 'hidden'; input.name = 'transaction_ids'; input.value = cb.value;
+                container.appendChild(input);
+            });
         });
     });
 </script>

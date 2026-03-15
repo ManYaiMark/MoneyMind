@@ -11,16 +11,14 @@
                     
                     <div class="position-relative d-inline-block mb-3">
                         <div style="width: 120px; height: 120px;">
-                            <div style="width: 120px; height: 120px;">
-                                {% if request.user.profile.profile_picture %}
-                                    <img src="{{ request.user.profile.profile_picture.url }}" class="rounded-circle w-100 h-100 object-fit-cover shadow border">
-                                {% else %}
-                                    <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center shadow border text-white {{ request.user.profile.avatar_color|default:current_color }}" 
-                                        style="font-size: 48px; font-weight: bold;">
-                                        {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
-                                    </div>
-                                {% endif %}
-                            </div>
+                            {% if request.user.profile.profile_picture and request.user.profile.profile_picture.name %}
+                                <img src="{{ request.user.profile.profile_picture.url }}" class="rounded-circle w-100 h-100 object-fit-cover shadow border">
+                            {% else %}
+                                <div class="rounded-circle w-100 h-100 d-flex align-items-center justify-content-center shadow border text-white {{ request.user.profile.avatar_color|default:'bg-primary' }}" 
+                                    style="font-size: 48px; font-weight: bold;">
+                                    {{ request.user.first_name|default:request.user.username|slice:":1"|upper }}
+                                </div>
+                            {% endif %}
                         </div>
                         
                         <button class="btn btn-light btn-sm border position-absolute bottom-0 end-0 rounded-circle shadow-sm" 
