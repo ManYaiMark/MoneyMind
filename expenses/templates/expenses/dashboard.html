@@ -38,8 +38,9 @@
         <div class="col-md-3">
             <div class="card h-100 border-0 border-start border-4 border-info shadow-sm rounded-4">
                 <div class="card-body">
-                    <p class="small fw-bold text-info text-uppercase mb-1">งบที่เหลือประจำเดือน</p>
-                    <h3 class="fw-bold mb-0 {% if remaining_budget < 0 %}text-danger{% endif %}">{{ remaining_budget|floatformat:2|intcomma }}</h3>
+                    <p class="small fw-bold text-info text-uppercase mb-1">เงินคงเหลือสุทธิเดือนนี้</p>
+                    <h3 class="fw-bold mb-0 {% if remaining_budget < 0 %}text-success{% else %}text-danger{% endif %}">{{ net_cash_flow|floatformat:2|intcomma }} ฿</h3>
+                    <!-- <h3 class="fw-bold mb-0 {% if remaining_budget < 0 %}text-danger{% endif %}">{{ net_cash_flow|floatformat:2|intcomma }} ฿</h3> -->
                 </div>
             </div>
         </div>
@@ -136,11 +137,6 @@
                         </h3>
                     </div>
                 </div>
-            </div>
-            {% else %}
-            <div class="card border-0 shadow-sm rounded-4 bg-primary text-white p-4 text-center">
-                <p class="small mb-2 opacity-75">เงินคงเหลือสุทธิเดือนนี้</p>
-                <h2 class="fw-bold mb-0">{{ net_cash_flow|floatformat:2|intcomma }} ฿</h2>
             </div>
             {% endif %}
 

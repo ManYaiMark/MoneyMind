@@ -3,17 +3,13 @@
 {% block content %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <style>
-    /* ปรับแต่งปฏิทินสีฟ้าพาสเทล */
     .flatpickr-calendar { border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
     .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange { background: #0d6efd !important; border-color: #0d6efd !important; }
     .flatpickr-day.inRange { background: #e3f2fd !important; box-shadow: -5px 0 0 #e3f2fd, 5px 0 0 #e3f2fd !important; border-color: #e3f2fd !important; }
     .flatpickr-months .flatpickr-month { background: #0d6efd; color: #fff; border-radius: 15px 15px 0 0; }
     .flatpickr-current-month .flatpickr-monthDropdown-months { color: #fff !important; }
     span.flatpickr-weekday { background: #0d6efd; color: #fff !important; }
-    
-    /* ✅ วันที่ไม่มีข้อมูลให้ตัวเลขสีจาง */
     .day-no-data { color: #d1d3e2 !important; opacity: 0.5; }
-    /* ✅ วันที่มีข้อมูลให้สีชัดเจนและมีพื้นหลังวงกลมอ่อนๆ */
     .day-has-data { color: #0d6efd !important; font-weight: 700; background-color: rgba(13, 110, 253, 0.1); border-radius: 50%; }
 </style>
 
@@ -51,7 +47,7 @@
                     <input type="hidden" name="start_date" id="hidden_start_date" value="{{ start_date }}">
                     <input type="hidden" name="end_date" id="hidden_end_date" value="{{ end_date }}">
                 </div>
-                
+
                 <div class="col-md-2">
                     <label class="small fw-bold text-secondary mb-1">หมวดหมู่</label>
                     <div class="dropdown">
@@ -119,9 +115,21 @@
                             </td>
                             <td class="text-end fw-bold {% if txn.amount < 0 %}text-danger{% else %}text-success{% endif %}">{{ txn.amount|floatformat:2 }}</td>
                             <td class="text-center">
-                                <button class="btn btn-sm btn-outline-warning rounded-circle" data-bs-toggle="modal" data-bs-target="#editModal" 
-                                        data-id="{{ txn.id }}" data-date="{{ txn.date|date:'Y-m-d' }}" data-desc="{{ txn.description }}" 
-                                        data-amount="{{ txn.amount }}" data-cat="{{ txn.category.id|default:'' }}" style="width:32px;height:32px;">✏️</button>
+                                <button class="btn btn-sm btn-outline-warning rounded-circle" 
+                                        data-bs-toggle="modal" data-bs-target="#editModal"
+                                        data-id="{{ txn.id }}"
+                                        data-date="{{ txn.date|date:'Y-m-d' }}"
+                                        data-desc="{{ txn.description }}"
+                                        data-amount="{{ txn.amount }}"
+                                        data-cat="{{ txn.category.id|default:'' }}"
+                                        data-cat-name="{{ txn.category.name|default:'' }}"
+                                        data-cat-icon="{{ txn.category.icon|default:'' }}"
+                                        data-cat-color="{{ txn.category.color|default:'' }}"
+                                        style="width:32px;height:32px;">✏️</button>
+                                <button class="btn btn-sm btn-outline-danger rounded-circle p-1 ms-1 shadow-sm" 
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        data-id="{{ txn.id }}"
+                                        style="width:32px;height:32px;">🗑️</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -132,6 +140,7 @@
     </div>
 </div>
 
+<!-- ✅ Edit Modal -->
 <div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow-lg">
@@ -139,18 +148,63 @@
                 <h5 class="modal-title fw-bold" style="color: #0d6efd;">✏️ แก้ไขรายการ</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+
             <form id="editForm" method="post">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <div class="mb-3"><label class="small fw-bold text-secondary">วันที่</label><input type="date" name="date" id="editDate" class="form-control rounded-3 border-0 bg-light" required></div>
-                    <div class="mb-3"><label class="small fw-bold text-secondary">รายการ</label><input type="text" name="description" id="editDesc" class="form-control rounded-3 border-0 bg-light" required></div>
-                    <div class="mb-3"><label class="small fw-bold text-secondary">จำนวนเงิน</label><input type="number" step="0.01" name="amount" id="editAmount" class="form-control rounded-3 border-0 bg-light" required></div>
-                    <div class="mb-1"><label class="small fw-bold text-secondary">หมวดหมู่</label>
-                        <select name="category" id="editCategory" class="form-select rounded-3 border-0 bg-light">
-                            <option value="">-- ไม่ระบุ --</option>
-                            {% for cat in income_cats %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}
-                            {% for cat in expense_cats %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}
-                        </select>
+                    <div class="mb-3">
+                        <label class="small fw-bold text-secondary">วันที่</label>
+                        <input type="date" name="date" id="editDate" class="form-control rounded-3 border-0 bg-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold text-secondary">รายการ</label>
+                        <input type="text" name="description" id="editDesc" class="form-control rounded-3 border-0 bg-light" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold text-secondary">จำนวนเงิน</label>
+                        <input type="number" step="0.01" name="amount" id="editAmount" class="form-control rounded-3 border-0 bg-light" required>
+                    </div>
+                    <div class="mb-1">
+                        <label class="small fw-bold text-secondary">หมวดหมู่</label>
+                        <div class="dropdown">
+                            <button class="btn btn-white border w-100 text-start d-flex align-items-center justify-content-between p-2 rounded-3"
+                                    type="button" id="editCatBtn" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: #dee2e6;">
+                                <span id="selectedDisplay"><i class="bi bi-question-circle me-2 text-muted"></i> - ไม่ระบุ -</span>
+                                <i class="bi bi-chevron-down small text-muted"></i>
+                            </button>
+                            <ul class="dropdown-menu w-100 shadow border-0 rounded-4 p-2" style="max-height: 300px; overflow-y: auto;">
+                                <li>
+                                    <a class="dropdown-item rounded-3 p-2 mb-1" href="javascript:void(0)"
+                                        onclick="selectCategory('', 'secondary', 'bi-question-circle', '- ไม่ระบุ -')">
+                                        <i class="bi bi-question-circle me-2 text-muted"></i> - ไม่ระบุ -
+                                    </a>
+                                </li>
+                                <li><h6 class="dropdown-header fw-bold text-success mt-2">รายรับ</h6></li>
+                                {% for cat in income_cats %}
+                                <li>
+                                    <a class="dropdown-item rounded-3 p-1 mb-1" href="javascript:void(0)"
+                                        onclick="selectCategory('{{ cat.id }}', '{{ cat.color }}', '{{ cat.icon }}', '{{ cat.name }}')">
+                                        <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start">
+                                            <i class="bi {{ cat.icon }} me-2"></i> {{ cat.name }}
+                                        </span>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                                <li><h6 class="dropdown-header fw-bold text-danger mt-2">รายจ่าย</h6></li>
+                                {% for cat in expense_cats %}
+                                <li>
+                                    <a class="dropdown-item rounded-3 p-1 mb-1" href="javascript:void(0)"
+                                        onclick="selectCategory('{{ cat.id }}', '{{ cat.color }}', '{{ cat.icon }}', '{{ cat.name }}')">
+                                        <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start">
+                                            <i class="bi {{ cat.icon }} me-2"></i> {{ cat.name }}
+                                        </span>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <!-- ✅ FIX 1: เพิ่ม name="category" ให้ hidden input เพื่อส่งข้อมูลไป Django -->
+                        <input type="hidden" id="editCatId" name="category">
                     </div>
                 </div>
                 <div class="modal-footer border-0 p-4 pt-0 gap-2">
@@ -162,6 +216,7 @@
     </div>
 </div>
 
+<!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow text-center p-4">
@@ -175,13 +230,15 @@
     </div>
 </div>
 
+<!-- Bulk Delete Modal -->
 <div class="modal fade" id="bulkDeleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow text-center p-4">
             <div class="mb-3 text-danger"><span style="font-size: 3rem;">🔥</span></div>
             <h5 class="fw-bold">ลบ <span id="bulkDeleteCount">0</span> รายการ?</h5>
             <form method="post" action="{% url 'delete_multiple_transactions' %}" id="bulkDeleteForm">
-                {% csrf_token %}<div id="bulkDeleteInputs"></div>
+                {% csrf_token %}
+                <div id="bulkDeleteInputs"></div>
                 <div class="d-flex gap-2 justify-content-center mt-3">
                     <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">ยืนยันลบ</button>
                     <button type="button" class="btn btn-light rounded-pill px-4 border" data-bs-dismiss="modal">ยกเลิก</button>
@@ -193,63 +250,64 @@
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    // ดึงวันที่ที่มีข้อมูลมาจาก View
-    // แปลงเป็น Set เพื่อให้ค้นหาได้รวดเร็วที่สุดระดับ (O(1)) ป้องกันปฏิทินค้าง
     const activeDatesSet = new Set({{ active_dates_json|safe }});
+
+    // ✅ FIX 3 & 4: เพิ่มฟังก์ชัน selectCategory ที่หายไป
+    // อัปเดตปุ่ม dropdown และ hidden input ให้ตรงกัน
+    function selectCategory(id, color, icon, name) {
+        document.getElementById('editCatId').value = id;
+
+        const display = document.getElementById('selectedDisplay');
+        if (!id) {
+            display.innerHTML = '<i class="bi bi-question-circle me-2 text-muted"></i> - ไม่ระบุ -';
+        } else {
+            display.innerHTML = `<span class="badge bg-${color} bg-opacity-10 text-${color} border border-${color} p-2 rounded-pill">
+                <i class="bi ${icon} me-1"></i> ${name}
+            </span>`;
+        }
+    }
 
     function setFilterCategory(id, name) {
         document.getElementById('filterCategoryInput').value = id;
         document.getElementById('filterCatDisplay').innerText = id ? name : 'ทั้งหมด';
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const todayStr = new Date().toISOString().split('T')[0];
         const startVal = document.getElementById('hidden_start_date').value;
         const endVal = document.getElementById('hidden_end_date').value;
 
-        // ✅ Flatpickr พร้อมเงื่อนไขพิเศษ
         flatpickr("#dateRangeInput", {
             mode: "range",
             dateFormat: "Y-m-d",
-            maxDate: "today", // ห้ามเลือกอนาคต
+            maxDate: "today",
             defaultDate: [startVal, endVal],
-            
-            // ✅ เปลี่ยนสีวันที่ไม่มีข้อมูลให้จางลง
-            onDayCreate: function(dObj, dStr, fp, dayElem) {
+            onDayCreate: function (dObj, dStr, fp, dayElem) {
                 const d = dayElem.dateObj;
-                // สร้าง Format YYYY-MM-DD แบบ Local Time ที่เร็วที่สุดและวันที่ไม่เพี้ยน
-                const dateStr = d.getFullYear() + "-" + 
-                                String(d.getMonth() + 1).padStart(2, '0') + "-" + 
-                                String(d.getDate()).padStart(2, '0');
-                                
+                const dateStr = d.getFullYear() + "-" +
+                    String(d.getMonth() + 1).padStart(2, '0') + "-" +
+                    String(d.getDate()).padStart(2, '0');
                 if (!activeDatesSet.has(dateStr)) {
                     dayElem.classList.add("day-no-data");
                 } else {
                     dayElem.classList.add("day-has-data");
                 }
             },
-
-            onChange: function(selectedDates, dateStr, instance) {
+            onChange: function (selectedDates, dateStr, instance) {
                 if (selectedDates.length > 0) {
                     const selStart = instance.formatDate(selectedDates[0], "Y-m-d");
-                    
-                    // ✅ ห้ามเลือกวันเริ่มต้นเป็น "วันนี้"
                     if (selStart === todayStr) {
                         alert("วันเริ่มต้นต้องเป็นอดีตเท่านั้น (เลือกได้มากสุดคือเมื่อวาน)");
                         instance.clear();
                         return;
                     }
-
                     if (selectedDates.length === 2) {
                         const selEnd = instance.formatDate(selectedDates[1], "Y-m-d");
-                        
-                        // ✅ วันสิ้นสุดต้องมากกว่าวันเริ่มต้น
                         if (selEnd <= selStart) {
                             alert("วันสิ้นสุดต้องอยู่หลังวันเริ่มต้น");
                             instance.clear();
                             return;
                         }
-                        
                         document.getElementById('hidden_start_date').value = selStart;
                         document.getElementById('hidden_end_date').value = selEnd;
                     }
@@ -257,18 +315,25 @@
             }
         });
 
-        // Modal Edit Setup
+        // ✅ FIX 2: แก้ Modal Edit ให้ใช้ selectCategory() แทนการอ้าง editCategory ที่ไม่มีแล้ว
+        // และเพิ่มการ restore หมวดหมู่เดิมจาก data attributes บนปุ่ม
         var editModal = document.getElementById('editModal');
         editModal.addEventListener('show.bs.modal', function (event) {
             var btn = event.relatedTarget;
             document.getElementById('editDate').value = btn.getAttribute('data-date');
             document.getElementById('editDesc').value = btn.getAttribute('data-desc');
             document.getElementById('editAmount').value = btn.getAttribute('data-amount');
-            document.getElementById('editCategory').value = btn.getAttribute('data-cat');
             document.getElementById('editForm').action = "{% url 'edit_transaction' 0 %}".replace('0', btn.getAttribute('data-id'));
+
+            // ✅ Restore หมวดหมู่เดิมโดยเรียก selectCategory() พร้อม data ที่ครบถ้วน
+            const catId    = btn.getAttribute('data-cat');
+            const catName  = btn.getAttribute('data-cat-name');
+            const catIcon  = btn.getAttribute('data-cat-icon');
+            const catColor = btn.getAttribute('data-cat-color');
+            selectCategory(catId, catColor, catIcon, catName);
         });
 
-        // Modal Delete Setup
+        // Modal Delete
         var deleteModal = document.getElementById('deleteModal');
         deleteModal.addEventListener('show.bs.modal', function (event) {
             document.getElementById('confirmDeleteBtn').href = "{% url 'delete_transaction' 0 %}".replace('0', event.relatedTarget.getAttribute('data-id'));
@@ -297,7 +362,9 @@
             container.innerHTML = '';
             document.querySelectorAll('.txn-checkbox:checked').forEach(cb => {
                 const input = document.createElement('input');
-                input.type = 'hidden'; input.name = 'transaction_ids'; input.value = cb.value;
+                input.type = 'hidden';
+                input.name = 'transaction_ids';
+                input.value = cb.value;
                 container.appendChild(input);
             });
         });

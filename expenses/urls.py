@@ -27,7 +27,7 @@ urlpatterns = [
 
     # ไม่ไดเใช้แล้ว
     # path('ai-manager/', views.ai_manager, name='ai_manager'),
-    path('ai-manager/template/', views.download_ai_template, name='download_ai_template'),
+    # path('ai-manager/template/', views.download_ai_template, name='download_ai_template'),
 
     path('transactions/', views.transaction_list, name='transaction_list'),
     path('transaction/edit/<int:transaction_id>/', views.edit_transaction, name='edit_transaction'),
@@ -35,7 +35,7 @@ urlpatterns = [
     path('transactions/delete-multiple/', views.delete_multiple_transactions, name='delete_multiple_transactions'),
 
     path('categories/', views.manage_categories, name='manage_categories'),
-    path('categories/edit/<int:cat_id>/', views.edit_category, name='edit_category'),
+    # path('categories/edit/<int:cat_id>/', views.edit_category, name='edit_category'),
     path('categories/delete/<int:cat_id>/', views.delete_category, name='delete_category'),
 
     path('budget/', views.manage_budget, name='manage_budget'),

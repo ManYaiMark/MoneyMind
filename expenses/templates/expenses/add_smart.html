@@ -156,7 +156,7 @@
                 <div class="mb-3">
                     <label class="small fw-bold text-secondary mb-1">หมวดหมู่</label>
                     <div class="dropdown">
-                        <button class="btn btn-white border w-100 text-start d-flex align-items-center justify-content-between p-2 rounded-3" 
+                        <button class="btn btn-white border w-100 text-start d-flex align-items-center justify-content-between p-2 rounded-3 custom-pill " 
                                 type="button" id="editCatBtn" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: #dee2e6;">
                             <span id="selectedDisplay"><i class="bi bi-question-circle me-2 text-muted"></i> - ไม่ระบุ -</span>
                             <i class="bi bi-chevron-down small text-muted"></i>
@@ -166,13 +166,13 @@
                             <li><h6 class="dropdown-header fw-bold text-success mt-2">รายรับ</h6></li>
                             {% for cat in income_cats %}
                             <li><a class="dropdown-item rounded-3 p-1 mb-1" href="javascript:void(0)" onclick="selectCategory('{{ cat.id }}', '{{ cat.color }}', '{{ cat.icon }}', '{{ cat.name }}')">
-                                <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start"><i class="bi {{ cat.icon }} me-2"></i> {{ cat.name }}</span>
+                                <span class=" custom-pill badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start"><i class="bi {{ cat.icon }} me-2"></i> {{ cat.name }}</span>
                             </a></li>
                             {% endfor %}
                             <li><h6 class="dropdown-header fw-bold text-danger mt-2">รายจ่าย</h6></li>
                             {% for cat in expense_cats %}
                             <li><a class="dropdown-item rounded-3 p-1 mb-1" href="javascript:void(0)" onclick="selectCategory('{{ cat.id }}', '{{ cat.color }}', '{{ cat.icon }}', '{{ cat.name }}')">
-                                <span class="badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start"><i class="bi {{ cat.icon }} me-2"></i> {{ cat.name }}</span>
+                                <span class=" custom-pill badge bg-{{ cat.color }} bg-opacity-10 text-{{ cat.color }} border border-{{ cat.color }} p-2 rounded-pill w-100 text-start"><i class="bi {{ cat.icon }} me-2"></i> {{ cat.name }}</span>
                             </a></li>
                             {% endfor %}
                         </ul>
